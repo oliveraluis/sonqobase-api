@@ -10,6 +10,10 @@ from app.models.responses import (
     ApiKeyResponse,
 )
 from app.infra.project_repository import ProjectRepositoryProtocol
+from app.infra.user_repository import UserRepository
+from app.infra.plan_repository import PlanRepository
+from app.infra.event_bus import get_event_bus
+from app.domain.events import ProjectCreatedEvent
 
 
 def _to_response(
@@ -18,6 +22,7 @@ def _to_response(
 ) -> ProjectResponse:
     return ProjectResponse(
         id=project.id,
+        slug=project.slug,
         name=project.name,
         description=project.description,
         status=project.status,
@@ -33,24 +38,84 @@ def _to_response(
 
 
 class CreateProjectService:
-    def __init__(self, repository: ProjectRepositoryProtocol):
+    """
+    Servicio para crear proyectos.
+    Valida límites del usuario según su plan.
+    """
+    
+    def __init__(
+        self,
+        repository: ProjectRepositoryProtocol,
+        user_repo: UserRepository = None,
+        plan_repo: PlanRepository = None,
+    ):
         self.repository = repository
+        self.user_repo = user_repo or UserRepository()
+        self.plan_repo = plan_repo or PlanRepository()
+        self.event_bus = get_event_bus()
 
-    def execute(self, payload: ProjectCreateRequest) -> ProjectResponse:
-        # 1️⃣ IDs y expiración
+    async def execute(
+        self,
+        payload: ProjectCreateRequest,
+        user_id: str,
+    ) -> ProjectResponse:
+        """
+        Crear un nuevo proyecto.
+        
+        Args:
+            payload: Datos del proyecto (name, slug, description)
+            user_id: ID del usuario que crea el proyecto
+        
+        Returns:
+            ProjectResponse con el proyecto creado y API key
+        
+        Raises:
+            ValueError: Si el usuario no existe, excede límites, o slug ya existe
+        """
+        # 1️⃣ Obtener usuario y plan
+        user = self.user_repo.get_by_id(user_id)
+        if not user:
+            raise ValueError(f"User '{user_id}' not found")
+        
+        plan = self.plan_repo.get_by_name(user.plan_name)
+        if not plan:
+            raise ValueError(f"Plan '{user.plan_name}' not found")
+        
+        # 2️⃣ Validar que el slug sea único
+        if self.repository.slug_exists(payload.slug):
+            raise ValueError(
+                f"Project slug '{payload.slug}' is already taken. "
+                f"Please choose a different identifier."
+            )
+        
+        # 3️⃣ Validar límite de proyectos
+        if user.usage.projects_count >= plan.projects_limit:
+            raise ValueError(
+                f"Project limit exceeded. "
+                f"Your plan allows {plan.projects_limit} projects, "
+                f"you currently have {user.usage.projects_count}. "
+                f"Upgrade your plan to create more projects."
+            )
+        
+        # 3️⃣ Generar IDs y API key
         project_id: str = f"proj_{uuid4().hex[:8]}"
-        api_key: str = f"temp_{token_hex(16)}"
-        expires_at: datetime = datetime.now(timezone.utc) + timedelta(hours=48)
+        api_key: str = f"sonqo_proj_{token_hex(16)}"  # Actualizado formato
+        
+        # 4️⃣ Calcular expiración según plan
+        retention_hours = plan.retention_hours
+        expires_at: datetime = datetime.now(timezone.utc) + timedelta(hours=retention_hours)
 
-        # 2️⃣ Database efímera
+        # 5️⃣ Database efímera
         database = Database(
             name=f"ephemeral_{uuid4().hex[:6]}",
             expires_at=expires_at,
         )
 
-        # 3️⃣ Dominio
+        # 6️⃣ Crear entidad Project
         project = Project(
             id=project_id,
+            user_id=user_id,  # Relación con usuario
+            slug=payload.slug,  # Identificador legible
             name=payload.name,
             description=payload.description,
             status="provisioned",
@@ -58,8 +123,20 @@ class CreateProjectService:
             database=database,
         )
 
-        # 4️⃣ Persistencia
+        # 7️⃣ Persistir proyecto
         self.repository.save(project, api_key)
+        
+        # 8️⃣ Incrementar contador de proyectos del usuario
+        self.user_repo.increment_usage(user_id, projects=1)
+        
+        # 9️⃣ Publicar evento de dominio
+        await self.event_bus.publish(ProjectCreatedEvent(
+            user_id=user_id,
+            project_id=project_id,
+            project_slug=payload.slug,
+            project_name=payload.name,
+            plan_name=user.plan_name,
+        ))
 
-        # 5️⃣ Response
+        # 🔟 Response
         return _to_response(project, api_key)

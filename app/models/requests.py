@@ -4,7 +4,9 @@ from typing import Optional, Dict, Any
 
 class ProjectCreateRequest(BaseModel):
     name: str
+    slug: str  # Identificador legible (ej: "altoqperu")
     description: Optional[str] = None
+
 
 class InsertCollectionRequest(BaseModel):
     data: Dict[str, Any]

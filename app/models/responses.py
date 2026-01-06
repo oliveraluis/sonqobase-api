@@ -13,6 +13,7 @@ class ApiKeyResponse(BaseModel):
 
 class ProjectResponse(BaseModel):
     id: str
+    slug: str  # Identificador legible
     name: str
     description: str | None
     status: str

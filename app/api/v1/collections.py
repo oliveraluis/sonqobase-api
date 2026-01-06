@@ -1,6 +1,8 @@
 import logging
 
-from fastapi import APIRouter, Header, HTTPException, status, Depends, Query
+from fastapi import APIRouter, Header, HTTPException, status, Depends, Query, UploadFile, File, Form, Request
+from typing import Optional
+import json
 
 from app.config import settings
 from app.infra.gemini_embeddings import GeminiEmbeddingProvider
@@ -15,6 +17,10 @@ from app.services.get_collection import GetCollectionService
 from app.models.responses import ListDocumentsResponse, CollectionQueryResponse
 from app.services.rag_ingest import RagIngestService
 from app.services.rag_query import RagQueryService
+from app.strategies.pdf_ingest_strategy import PdfIngestStrategy
+from app.strategies.text_ingest_strategy import TextIngestStrategy
+from app.infra.user_repository import UserRepository
+from app.infra.plan_repository import PlanRepository
 
 router = APIRouter()
 
@@ -192,6 +198,112 @@ async def collection_ingest(
     except Exception as e:
         logger.error(f"Unexpected error during RAG ingest: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Nuevo endpoint para ingesta de archivos (PDFs)
+@router.post(
+    "/{collection}/ingest/files",
+    status_code=status.HTTP_202_ACCEPTED
+)
+async def ingest_files(
+    collection: str,
+    request: Request,
+    file: UploadFile = File(...),
+    metadata: Optional[str] = Form(None),
+    document_id: Optional[str] = Form(None),
+    chunk_size: int = Form(500),
+):
+    """
+    Ingesta de archivos (PDFs).
+    
+    Parámetros:
+    - file: Archivo PDF
+    - metadata: Metadatos en formato JSON string
+    - document_id: ID del documento (para ingesta progresiva)
+    - chunk_size: Tamaño de chunks (default: 500)
+    
+    Requiere Project API Key.
+    """
+    # Obtener información del middleware
+    if not hasattr(request.state, 'project_id'):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Project API Key required"
+        )
+    
+    project_id = request.state.project_id
+    user_id = request.state.user_id
+    user = request.state.user
+    
+    # Obtener plan del usuario
+    plan_repo = PlanRepository()
+    plan = plan_repo.get_by_name(user.plan_name)
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Plan configuration not found"
+        )
+    
+    # Validar extensión
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only PDF files are supported. Filename must end with .pdf"
+        )
+    
+    # Parsear metadata
+    parsed_metadata = {}
+    if metadata:
+        try:
+            parsed_metadata = json.loads(metadata)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid metadata JSON"
+            )
+    
+    # Usar PdfIngestStrategy
+    strategy = PdfIngestStrategy()
+    
+    try:
+        # Validar según límites del plan
+        await strategy.validate(user, plan, file)
+        
+        # Procesar PDF (pasar plan para metadata)
+        job_id = await strategy.process(
+            user_id=user_id,
+            project_id=project_id,
+            collection=collection,
+            source=file,
+            document_id=document_id,
+            metadata=parsed_metadata,
+            chunk_size=chunk_size,
+            plan=plan,  # Pasar plan para rate limiting
+        )
+        
+        logger.info(f"📄 PDF ingest started: job_id={job_id}, file={file.filename}")
+        
+        # Response con información para polling
+        return {
+            "job_id": job_id,
+            "status": "processing",
+            "collection": collection,
+            "filename": file.filename,
+            "message": "PDF is being processed. This may take a few minutes.",
+            "check_status_url": f"/api/v1/jobs/{job_id}",
+            "estimated_time_seconds": 45
+        }
+    
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error in PDF ingest: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error during PDF ingestion"
+        )
 
 @router.post("/{collection}/query", response_model=CollectionQueryResponse)
 async def collection_query(

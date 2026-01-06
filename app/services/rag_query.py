@@ -43,7 +43,7 @@ class RagQueryService:
 
         client = get_mongo_client()
         db = client[project["database"]]
-        vector_collection = db[f"{collection}__vectors"]
+        vector_collection = db[f"{collection}_vectors"]
 
         pipeline = [
             {
