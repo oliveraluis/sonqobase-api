@@ -10,6 +10,15 @@ class Database:
 
 
 @dataclass(frozen=True)
+class ProjectStats:
+    """Estadísticas de uso del proyecto"""
+    reads_count: int = 0
+    writes_count: int = 0
+    rag_queries_count: int = 0
+    last_activity: datetime | None = None
+
+
+@dataclass(frozen=True)
 class Project:
     id: str
     user_id: str  # Relación con User
@@ -19,6 +28,7 @@ class Project:
     status: str
     expires_at: datetime
     database: Database
+    stats: ProjectStats  # Estadísticas de uso del proyecto
 
 
 
@@ -79,3 +89,16 @@ class MasterKey:
     permissions: List[str]  # ["*"] o ["users:create", "users:update", etc.]
     created_at: datetime
     is_active: bool = True
+
+
+@dataclass(frozen=True)
+class Lead:
+    """Lead de contacto desde landing page"""
+    email: str
+    name: str
+    company: str | None
+    interest: str  # Descripción de su interés
+    plan_interest: str  # "free" | "starter" | "pro"
+    created_at: datetime
+    status: str = "pending"  # "pending" | "contacted" | "converted"
+    source: str = "landing_page"

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Proyecto - Dashboard SonqoBase</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--bg-card);
+            border-right: 2px solid var(--border-color);
+            padding: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .sidebar-logo-icon {
+            font-size: 2rem;
+        }
+
+        .sidebar-logo-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 0.875rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .sidebar-footer {
+            padding-top: var(--spacing-md);
+            border-top: 2px solid var(--border-color);
+        }
+
+        .user-info {
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .user-plan {
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: var(--spacing-lg);
+            background: var(--bg-primary);
+            overflow-y: auto;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: var(--spacing-md);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .page-header {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+        }
+
+        .form-container {
+            max-width: 600px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: var(--spacing-lg);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-label-optional {
+            color: var(--text-secondary);
+            font-weight: 400;
+            font-size: 0.85rem;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-hint {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .form-error {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .form-error.show {
+            display: block;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-lg);
+        }
+
+        .btn-submit {
+            flex: 1;
+            padding: 1rem;
+            background: var(--accent-gradient);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            padding: 1rem 2rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid var(--border-color);
+            }
+
+            .form-container {
+                padding: var(--spacing-md);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="sidebar-logo-icon">🗄️</span>
+                <span class="sidebar-logo-text">SonqoBase</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard">📊 Resumen</a>
+                <a href="/dashboard/projects" class="active">🗂️ Proyectos</a>
+                <a href="/dashboard/settings">⚙️ Configuración</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info">
+                    <div class="user-email" id="user-email">Loading...</div>
+                    <div class="user-plan" id="user-plan">...</div>
+                </div>
+                <button class="btn-logout" onclick="logout()">🚪 Cerrar sesión</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="/dashboard">Dashboard</a>
+                <span>›</span>
+                <a href="/dashboard/projects">Proyectos</a>
+                <span>›</span>
+                <span>Nuevo Proyecto</span>
+            </div>
+
+            <div class="page-header">
+                <h1 class="page-title">Crear Nuevo Proyecto</h1>
+                <p class="page-subtitle">Configura una base de datos efímera para tu aplicación</p>
+            </div>
+
+            <div class="form-container">
+                <form id="create-project-form">
+                    <div class="form-group">
+                        <label class="form-label" for="project-name">
+                            Nombre del Proyecto *
+                        </label>
+                        <input type="text" id="project-name" class="form-input"
+                            placeholder="ej: Mi Aplicación Increíble" required maxlength="100">
+                        <div class="form-hint">Un nombre descriptivo que te ayude a identificar tu proyecto</div>
+                        <div class="form-error" id="name-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="project-slug">
+                            Identificador (Slug) *
+                        </label>
+                        <input type="text" id="project-slug" class="form-input"
+                            placeholder="ej: mi-aplicacion-increible" required pattern="[a-z0-9-]+" maxlength="50">
+                        <div class="form-hint">Solo minúsculas, números y guiones. Se usará en las URLs de tu API.</div>
+                        <div class="form-error" id="slug-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="project-description">
+                            Descripción <span class="form-label-optional">(opcional)</span>
+                        </label>
+                        <textarea id="project-description" class="form-textarea"
+                            placeholder="Breve descripción de tu proyecto..." maxlength="500"></textarea>
+                        <div class="form-hint">Te ayudará a recordar para qué es este proyecto</div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="window.location.href='/dashboard/projects'">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-submit" id="submit-btn">
+                            Crear Proyecto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <script>
+        // Require authentication
+        (async () => {
+            const user = await requireAuth();
+            if (!user) return;
+
+            // Load user info
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('user-plan').textContent = user.plan;
+        })();
+
+        // Form validation
+        document.getElementById('create-project-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submit-btn');
+            const nameInput = document.getElementById('project-name');
+            const slugInput = document.getElementById('project-slug');
+            const descriptionInput = document.getElementById('project-description');
+
+            // Clear previous errors
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+
+            // Validate
+            let hasError = false;
+
+            if (!nameInput.value.trim()) {
+                showError('name-error', 'El nombre del proyecto es obligatorio');
+                hasError = true;
+            }
+
+            if (!slugInput.value.trim()) {
+                showError('slug-error', 'El identificador (slug) es obligatorio');
+                hasError = true;
+            } else if (!/^[a-z0-9-]+$/.test(slugInput.value)) {
+                showError('slug-error', 'El slug solo puede contener minúsculas, números y guiones');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creando...';
+
+            try {
+                const response = await apiCall('/api/v1/projects', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: nameInput.value.trim(),
+                        slug: slugInput.value.trim(),
+                        description: descriptionInput.value.trim() || null,
+                    }),
+                });
+
+                const project = await response.json();
+
+                showAlert('¡Proyecto creado exitosamente!', 'success');
+
+                // Redirect to project details after a short delay
+                setTimeout(() => {
+                    window.location.href = `/dashboard/projects/${project.id}`;
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error creating project:', error);
+
+                if (error.message.includes('slug already exists')) {
+                    showError('slug-error', 'Este identificador ya está en uso. Por favor elige otro.');
+                } else if (error.message.includes('limit')) {
+                    showAlert('Alcanzaste el límite de proyectos. Mejora tu plan para crear más.', 'error');
+                } else {
+                    showAlert('Error al crear el proyecto. Por favor intenta de nuevo.', 'error');
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Crear Proyecto';
+            }
+        });
+
+        function showError(elementId, message) {
+            const errorEl = document.getElementById(elementId);
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+    </script>
+</body>
+
+</html>

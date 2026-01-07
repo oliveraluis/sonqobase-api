@@ -58,7 +58,7 @@ SonqoBase es una API REST moderna construida con FastAPI que proporciona bases d
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/tu-usuario/SonqoBase.git
+git clone https://github.com/oliveraluis/SonqoBase.git
 cd SonqoBase
 ```
 

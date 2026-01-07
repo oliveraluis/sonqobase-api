@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SonqoBase Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <span class="auth-logo-icon">🗄️</span>
+                    <span class="auth-logo-text">SonqoBase</span>
+                </div>
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="auth-subtitle">Enter your User API Key to access your dashboard</p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="api-key" class="form-label">User API Key *</label>
+                    <input type="password" id="api-key" name="api-key" class="form-input" placeholder="sk_user_..."
+                        required autocomplete="off">
+                    <span class="form-hint">
+                        ⚠️ Your API key was shown once when you created your account. Keep it safe!
+                    </span>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    Login to Dashboard
+                </button>
+            </form>
+
+            <div class="auth-link">
+                Don't have an account? <a href="/dashboard/register">Register here</a>
+            </div>
+
+            <div class="auth-link">
+                <a href="/">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <script>
+        // Redirect if already authenticated
+        redirectIfAuthenticated();
+
+        // Handle login form
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const apiKey = document.getElementById('api-key').value.trim();
+            const loginBtn = document.getElementById('login-btn');
+
+            if (!apiKey) {
+                showAlert('Please enter your API key', 'error');
+                return;
+            }
+
+            setLoading(loginBtn, true);
+
+            try {
+                // Validate API key
+                const user = await validateApiKey(apiKey);
+
+                if (user) {
+                    // Save to localStorage
+                    saveApiKey(apiKey);
+
+                    // Show success and redirect
+                    showAlert('Login successful! Redirecting...', 'success');
+
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                } else {
+                    showAlert('Invalid API key. Please check and try again.', 'error');
+                    setLoading(loginBtn, false);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('An error occurred. Please try again.', 'error');
+                setLoading(loginBtn, false);
+            }
+        });
+    </script>
+</body>
+
+</html>

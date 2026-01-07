@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SonqoBase Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- Registration Form -->
+            <div id="register-form-container">
+                <div class="auth-header">
+                    <div class="auth-logo">
+                        <span class="auth-logo-icon">🗄️</span>
+                        <span class="auth-logo-text">SonqoBase</span>
+                    </div>
+                    <h1 class="auth-title">Create Account</h1>
+                    <p class="auth-subtitle">Get started with SonqoBase</p>
+                </div>
+
+                <div class="alert alert-info">
+                    ℹ️ Registration is currently by invitation only. Please contact us through the landing page.
+                </div>
+
+                <div class="auth-link">
+                    Already have an account? <a href="/dashboard/login">Login here</a>
+                </div>
+
+                <div class="auth-link">
+                    <a href="/">← Back to Home</a>
+                </div>
+            </div>
+
+            <!-- API Key Display (shown after registration) -->
+            <div id="api-key-container" style="display: none;">
+                <div class="auth-header">
+                    <div class="auth-logo">
+                        <span class="auth-logo-icon">✅</span>
+                    </div>
+                    <h1 class="auth-title">Account Created!</h1>
+                    <p class="auth-subtitle">Save your API key - it will only be shown once</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    ⚠️ <strong>Important:</strong> Copy your API key now. You won't be able to see it again!
+                </div>
+
+                <div class="api-key-display">
+                    <div class="api-key-label">Your User API Key:</div>
+                    <div class="api-key-value" id="api-key-value"></div>
+                    <div class="api-key-actions">
+                        <button type="button" class="btn-copy" id="copy-btn">
+                            📋 Copy to Clipboard
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    💡 Use this API key to login to your dashboard and make API calls.
+                </div>
+
+                <a href="/dashboard/login" class="btn btn-primary">
+                    Go to Login →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <script>
+        // Redirect if already authenticated
+        redirectIfAuthenticated();
+
+        // Copy API key to clipboard
+        document.getElementById('copy-btn')?.addEventListener('click', async () => {
+            const apiKey = document.getElementById('api-key-value').textContent;
+            const copyBtn = document.getElementById('copy-btn');
+
+            const success = await copyToClipboard(apiKey);
+
+            if (success) {
+                copyBtn.textContent = '✅ Copied!';
+                copyBtn.classList.add('copied');
+
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy to Clipboard';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } else {
+                showAlert('Failed to copy. Please copy manually.', 'error');
+            }
+        });
+
+        // Note: Actual registration happens through contact form on landing page
+        // Admin creates users manually via /api/v1/admin/users endpoint
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SonqoBase - Ephemeral Vector Database as a Service</title>
+    <meta name="description"
+        content="Vector Database as a Service con auto-cleanup. Perfecto para hackathons, MVPs y proyectos de IA.">
+    <link rel="stylesheet" href="/static/css/landing.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <span class="logo-icon">🗄️</span>
+                    <span class="logo-text">SonqoBase</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="/docs" target="_blank">API Docs</a>
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="#" class="btn-primary open-contact-modal">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">Ephemeral Vector Database</span>
+                    <br>as a Service
+                </h1>
+                <p class="hero-subtitle">
+                    Bases de datos vectoriales temporales con auto-cleanup automático.
+                    <br>Perfecto para hackathons, MVPs y proyectos de IA.
+                </p>
+                <div class="hero-cta">
+                    <a href="#" class="btn-hero open-contact-modal">Start Building Free</a>
+                    <a href="/docs" class="btn-secondary">View Documentation →</a>
+                </div>
+                <div class="hero-code">
+                    <pre><code><span class="code-comment"># Ingest PDF and get vectors in seconds</span>
+<span class="code-keyword">import</span> requests
+
+response = requests.post(
+    <span class="code-string">"https://api.sonqobase.com/v1/collections/docs/ingest"</span>,
+    headers={<span class="code-string">"X-API-Key"</span>: <span class="code-string">"your_key"</span>},
+    files={<span class="code-string">"file"</span>: open(<span class="code-string">"document.pdf"</span>, <span class="code-string">"rb"</span>)}
+)
+
+<span class="code-comment"># Query with natural language</span>
+results = requests.post(
+    <span class="code-string">"https://api.sonqobase.com/v1/collections/docs/query"</span>,
+    headers={<span class="code-string">"X-API-Key"</span>: <span class="code-string">"your_key"</span>},
+    json={<span class="code-string">"query"</span>: <span class="code-string">"What is the main topic?"</span>}
+)</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Características Principales</h2>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Ephemeral by Design</h3>
+                    <p>Bases de datos temporales con TTL automático. Perfecto para proyectos de corta duración sin
+                        preocuparte por cleanup.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI-Powered Ingestion</h3>
+                    <p>Sube PDFs y obtén embeddings automáticamente. Procesamiento asíncrono con tracking en tiempo
+                        real.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Vector Search</h3>
+                    <p>Búsqueda semántica con MongoDB Atlas Vector Search. Consultas en lenguaje natural sobre tus
+                        documentos.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3>Multi-Tenant Seguro</h3>
+                    <p>Aislamiento completo por proyecto. API Keys con scopes específicos y rate limiting por plan.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Usage Tracking</h3>
+                    <p>Monitoreo de uso en tiempo real. Límites por plan con webhooks para notificaciones.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Developer Experience</h3>
+                    <p>API REST simple y bien documentada. SDKs en Python, JavaScript y más próximamente.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">Cómo Funciona</h2>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Crea un Proyecto</h3>
+                        <p>Obtén tu API key y crea un proyecto efímero con duración configurable (7, 30, 90 días).</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Ingesta Documentos</h3>
+                        <p>Sube PDFs vía API. Procesamiento automático: extracción de texto → chunking → embeddings →
+                            almacenamiento vectorial.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Consulta con IA</h3>
+                        <p>Realiza búsquedas semánticas en lenguaje natural. Obtén respuestas contextualizadas de tus
+                            documentos.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Auto-Cleanup</h3>
+                        <p>Al expirar el proyecto, todo se elimina automáticamente. Cero mantenimiento, cero costos
+                            residuales.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title">Pricing Simple y Transparente</h2>
+            <p class="section-subtitle">Empieza gratis, escala cuando lo necesites</p>
+
+            <div class="pricing-grid" id="pricing-grid">
+                <div class="pricing-card">
+                    <div class="plan-name">Free</div>
+                    <div class="plan-price">
+                        <span class="price">$0</span>
+                        <span class="period">/mes</span>
+                    </div>
+                    <ul class="plan-features">
+                        <li>✓ 1 proyecto activo</li>
+                        <li>✓ 100 lecturas/mes</li>
+                        <li>✓ 50 escrituras/mes</li>
+                        <li>✓ 10 consultas RAG/mes</li>
+                        <li>✓ PDFs hasta 5MB</li>
+                        <li>✓ Duración: 7 días</li>
+                    </ul>
+                    <a href="#" class="btn-plan open-contact-modal" data-plan="free">Empezar Gratis</a>
+                </div>
+
+                <div class="pricing-card featured">
+                    <div class="plan-badge">Popular</div>
+                    <div class="plan-name">Starter</div>
+                    <div class="plan-price">
+                        <span class="price">$29</span>
+                        <span class="period">/mes</span>
+                    </div>
+                    <ul class="plan-features">
+                        <li>✓ 5 proyectos activos</li>
+                        <li>✓ 10,000 lecturas/mes</li>
+                        <li>✓ 5,000 escrituras/mes</li>
+                        <li>✓ 1,000 consultas RAG/mes</li>
+                        <li>✓ PDFs hasta 20MB</li>
+                        <li>✓ Duración: 30 días</li>
+                    </ul>
+                    <a href="#" class="btn-plan primary open-contact-modal" data-plan="starter">Empezar Ahora</a>
+                </div>
+
+                <div class="pricing-card">
+                    <div class="plan-name">Pro</div>
+                    <div class="plan-price">
+                        <span class="price">$99</span>
+                        <span class="period">/mes</span>
+                    </div>
+                    <ul class="plan-features">
+                        <li>✓ Proyectos ilimitados</li>
+                        <li>✓ 100,000 lecturas/mes</li>
+                        <li>✓ 50,000 escrituras/mes</li>
+                        <li>✓ 10,000 consultas RAG/mes</li>
+                        <li>✓ PDFs hasta 50MB</li>
+                        <li>✓ Duración: 90 días</li>
+                        <li>✓ Webhooks</li>
+                        <li>✓ Soporte prioritario</li>
+                    </ul>
+                    <a href="#" class="btn-plan open-contact-modal" data-plan="pro">Contactar Ventas</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Final -->
+    <section class="cta">
+        <div class="container">
+            <h2>¿Listo para construir tu próximo proyecto de IA?</h2>
+            <p>Empieza gratis en segundos. No se requiere tarjeta de crédito.</p>
+            <a href="#" class="btn-hero open-contact-modal">Get Started Now →</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="logo">
+                        <span class="logo-icon">🗄️</span>
+                        <span class="logo-text">SonqoBase</span>
+                    </div>
+                    <p>Ephemeral Vector Database as a Service</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="/docs">API Docs</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <a href="#">About</a>
+                    <a href="#">Blog</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                    <a href="#">Security</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 SonqoBase. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Contact Modal -->
+    <div id="contact-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Empieza con SonqoBase</h2>
+            <p class="modal-subtitle">Cuéntanos sobre tu proyecto y nos pondremos en contacto contigo</p>
+
+            <form id="contact-form">
+                <div class="form-group">
+                    <label for="name">Nombre *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="company">Empresa</label>
+                    <input type="text" id="company" name="company">
+                </div>
+
+                <div class="form-group">
+                    <label for="interest">¿Qué quieres construir con SonqoBase? *</label>
+                    <textarea id="interest" name="interest" rows="4" required
+                        placeholder="Ej: Sistema RAG para atención al cliente, búsqueda semántica de documentos legales, etc."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="plan">Plan de interés</label>
+                    <select id="plan" name="plan">
+                        <option value="free">Free - $0/mes</option>
+                        <option value="starter">Starter - $29/mes</option>
+                        <option value="pro">Pro - $99/mes</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit">Enviar Solicitud</button>
+            </form>
+
+            <div id="form-message" class="form-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/landing.js"></script>
+</body>
+
+</html>

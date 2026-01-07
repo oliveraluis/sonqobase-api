@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends, status, Request, HTTPException
+from typing import List
 from app.models.requests import ProjectCreateRequest
 from app.models.responses import ProjectResponse
 from app.services.create_project import CreateProjectService
+from app.services.list_user_projects import ListUserProjectsService
+from app.services.get_project_details import GetProjectDetailsService
 from app.infra.project_repository import ProjectRepository
 from app.infra.user_repository import UserRepository
 from app.infra.plan_repository import PlanRepository
+from app.dependencies.auth import require_user_key
 
 router = APIRouter()
 
@@ -13,6 +17,108 @@ def get_create_project_service() -> CreateProjectService:
     user_repo = UserRepository()
     plan_repo = PlanRepository()
     return CreateProjectService(repo, user_repo, plan_repo)
+
+def get_list_projects_service() -> ListUserProjectsService:
+    repo = ProjectRepository()
+    return ListUserProjectsService(repo)
+
+def get_project_details_service() -> GetProjectDetailsService:
+    repo = ProjectRepository()
+    return GetProjectDetailsService(repo)
+
+
+@router.get("", response_model=List[dict])
+async def list_projects(
+    user: dict = Depends(require_user_key),
+    service: ListUserProjectsService = Depends(get_list_projects_service),
+):
+    """
+    Listar todos los proyectos del usuario autenticado.
+    Requiere User API Key.
+    """
+    return service.execute(user["user_id"])
+
+
+@router.get("/{project_id}", response_model=dict)
+async def get_project(
+    project_id: str,
+    user: dict = Depends(require_user_key),
+    service: GetProjectDetailsService = Depends(get_project_details_service),
+):
+    """
+    Obtener detalles de un proyecto específico.
+    Requiere User API Key.
+    """
+    try:
+        return service.execute(project_id, user["user_id"])
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(e)
+            )
+
+
+@router.get("/{project_id}/api-key", response_model=dict)
+async def get_project_api_key(
+    project_id: str,
+    user: dict = Depends(require_user_key),
+):
+    """
+    Obtener la API key de un proyecto.
+    Requiere User API Key.
+    """
+    from app.services.get_project_api_key import GetProjectApiKeyService
+    
+    service = GetProjectApiKeyService(ProjectRepository())
+    
+    try:
+        return service.execute(project_id, user["user_id"])
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(e)
+            )
+
+
+@router.get("/{project_id}/collections", response_model=dict)
+async def list_project_collections(
+    project_id: str,
+    user: dict = Depends(require_user_key),
+):
+    """
+    Listar todas las colecciones de un proyecto.
+    Requiere User API Key.
+    """
+    from app.services.list_project_collections import ListProjectCollectionsService
+    
+    service = ListProjectCollectionsService(ProjectRepository())
+    
+    try:
+        return service.execute(project_id, user["user_id"])
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(e)
+            )
+
 
 @router.post(
     "",

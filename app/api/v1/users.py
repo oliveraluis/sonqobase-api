@@ -2,12 +2,13 @@
 Endpoints de usuarios (requieren User API Key).
 """
 import logging
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Depends
 from pydantic import BaseModel
 from typing import List
 
 from app.infra.user_repository import UserRepository
 from app.infra.plan_repository import PlanRepository
+from app.dependencies.auth import require_user_key
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -49,27 +50,29 @@ class AnalyticsResponse(BaseModel):
 
 # Endpoints
 @router.get("/me", response_model=UserInfoResponse)
-async def get_user_info(request: Request):
+async def get_user_info(user: dict = Depends(require_user_key)):
     """
     Obtener información del usuario autenticado.
     Requiere User API Key.
     """
-    # El middleware ya validó la autenticación
-    if request.state.auth_level not in ["user", "master"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User API Key required"
-        )
-    
-    user = request.state.user
-    
     return UserInfoResponse(
-        user_id=user.id,
-        email=user.email,
-        plan=user.plan_name,
-        status=user.status,
-        created_at=user.created_at.isoformat(),
+        user_id=user["user_id"],
+        email=user["email"],
+        plan=user["plan"],
+        status=user["status"],
+        created_at=user["created_at"],
     )
+
+
+@router.get("/debug/auth")
+async def debug_auth(request: Request):
+    """Debug endpoint to test middleware authentication"""
+    return {
+        "has_auth_level": hasattr(request.state, 'auth_level'),
+        "auth_level": getattr(request.state, 'auth_level', None),
+        "has_user": hasattr(request.state, 'user'),
+        "user_id": getattr(request.state, 'user', None).id if hasattr(request.state, 'user') else None,
+    }
 
 
 @router.get("/me/usage", response_model=AnalyticsResponse)

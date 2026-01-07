@@ -28,8 +28,19 @@ class AuthMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
     
     async def dispatch(self, request: Request, call_next):
+        logger.info(f"AuthMiddleware.dispatch called for path: {request.url.path}")
+        
         # Rutas públicas (no requieren autenticación)
         public_paths = [
+            "/pricing",
+            "/pricing-data",
+            "/contact",
+            "/docs-page",
+            "/dashboard/login",
+            "/dashboard/register",
+            "/dashboard",  # Dashboard overview (validación en frontend)
+            "/dashboard/projects",  # Projects pages (validación en frontend)
+            "/static",
             "/docs",
             "/redoc",
             "/openapi.json",
@@ -37,8 +48,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/api/v1/plans",  # Planes públicos
         ]
         
-        if any(request.url.path.startswith(path) for path in public_paths):
+        # Manejar root path de forma especial
+        if request.url.path == "/":
+            logger.info(f"Path {request.url.path} is root, skipping auth")
             return await call_next(request)
+        
+        for path in public_paths:
+            if request.url.path.startswith(path):
+                logger.info(f"Path {request.url.path} matches public path: {path}")
+                return await call_next(request)
         
         # Crear repositorios por request (usan singleton de conexión)
         master_key_repo = MasterKeyRepository()
@@ -109,14 +127,21 @@ class AuthMiddleware(BaseHTTPMiddleware):
         """Intentar autenticación con User Key"""
         user_key = request.headers.get("X-User-Key")
         
+        logger.info(f"_try_user_key_auth called. Has X-User-Key: {bool(user_key)}")
+        
         if not user_key:
+            logger.info("No X-User-Key header found")
             return False
         
+        logger.info(f"Looking for user with key: {user_key[:20]}...")
         user = user_repo.get_by_api_key(user_key)
+        
+        logger.info(f"User found: {bool(user)}")
         
         if user:
             # Verificar que el usuario esté activo
             if user.status != "active":
+                logger.warning(f"User {user.id} is {user.status}")
                 # Guardar error en request.state para manejarlo después
                 request.state.auth_error = self._forbidden_response(f"User account is {user.status}")
                 return False
@@ -127,6 +152,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             logger.debug(f"Authenticated user: {user.id}")
             return True
         
+        logger.warning("User not found with provided API key")
         return False
     
     def _try_project_key_auth(

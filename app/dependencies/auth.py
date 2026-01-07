@@ -38,7 +38,7 @@ async def require_master_key(
 async def require_user_key(
     request: Request,
     x_user_key: Annotated[str, Header(description="User API Key para operaciones de usuario")]
-) -> User:
+) -> dict:
     """
     Dependency que requiere User API Key.
     
@@ -47,19 +47,37 @@ async def require_user_key(
         x_user_key: Header X-User-Key
     
     Returns:
-        Usuario autenticado
+        Diccionario con información del usuario autenticado
     
     Raises:
         HTTPException: Si no está autenticado con User Key
     """
+    # Debug logging
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"require_user_key called")
+    logger.info(f"Has auth_level: {hasattr(request.state, 'auth_level')}")
+    logger.info(f"Auth level: {getattr(request.state, 'auth_level', 'NOT SET')}")
+    logger.info(f"Has user: {hasattr(request.state, 'user')}")
+    
     # El middleware ya validó el header, solo verificamos el nivel
     if not hasattr(request.state, 'auth_level') or request.state.auth_level != "user":
+        logger.error(f"Auth check failed. auth_level={getattr(request.state, 'auth_level', 'NOT SET')}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User API Key required"
         )
     
-    return request.state.user
+    user = request.state.user
+    
+    # Retornar diccionario serializado
+    return {
+        "user_id": user.id,
+        "email": user.email,
+        "plan": user.plan_name,
+        "status": user.status,
+        "created_at": user.created_at.isoformat(),
+    }
 
 
 async def require_project_key(

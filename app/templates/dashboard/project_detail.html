@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Proyecto - Dashboard SonqoBase</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Dashboard Layout */
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--bg-card);
+            border-right: 2px solid var(--border-color);
+            padding: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo-icon {
+            font-size: 2rem;
+        }
+
+        .sidebar-logo-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: var(--spacing-md);
+        }
+
+        /* Custom scrollbar for sidebar */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 0.875rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .sidebar-footer {
+            padding-top: var(--spacing-md);
+            border-top: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .user-plan {
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: var(--spacing-lg);
+            background: var(--bg-primary);
+            overflow-y: auto;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: var(--spacing-md);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .page-header {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .project-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .project-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .project-status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .project-status-badge.active {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-primary);
+        }
+
+        .project-status-badge.expired {
+            background: rgba(255, 68, 68, 0.2);
+            color: var(--error-color);
+        }
+
+        .project-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .project-meta {
+            display: flex;
+            gap: var(--spacing-lg);
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: var(--spacing-md);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* API Key Section */
+        .section {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .api-key-container {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-primary);
+            border-radius: 10px;
+            padding: var(--spacing-md);
+        }
+
+        .api-key-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .api-key-display {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .api-key-value {
+            flex: 1;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: var(--accent-primary);
+            word-break: break-all;
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+        }
+
+        .btn-copy-key {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent-gradient);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-copy-key:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-copy-key.copied {
+            background: var(--success-color);
+        }
+
+        /* Collections Section */
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .collection-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .collection-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .collection-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .collection-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .empty-collections {
+            text-align: center;
+            padding: var(--spacing-lg);
+            color: var(--text-secondary);
+        }
+
+        /* RAG Query Section */
+        .form-select {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+        }
+
+        .form-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            resize: vertical;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+        }
+
+        .form-textarea:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-hint {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Loading State */
+        .rag-loading {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto var(--spacing-md);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .loading-steps {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .loading-step {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .loading-step.active {
+            color: var(--accent-primary);
+            border: 2px solid var(--accent-primary);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .loading-hint {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Response Container */
+        .rag-response {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-primary);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .response-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .btn-clear {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .response-content {
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border-radius: 8px;
+            margin-bottom: var(--spacing-md);
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        .response-content p {
+            margin: 0.75rem 0;
+        }
+
+        .response-content ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .response-content li {
+            margin: 0.25rem 0;
+        }
+
+        .response-content strong {
+            color: var(--accent-primary);
+            font-weight: 700;
+        }
+
+        .response-sources {
+            padding-top: var(--spacing-md);
+            border-top: 2px solid var(--border-color);
+        }
+
+        .response-sources h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .source-item {
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Inline code styling */
+        code {
+            background: var(--bg-secondary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--accent-primary);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid var(--border-color);
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .project-title-row {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="sidebar-logo-icon">🗄️</span>
+                <span class="sidebar-logo-text">SonqoBase</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard">📊 Resumen</a>
+                <a href="/dashboard/projects" class="active">🗂️ Proyectos</a>
+                <a href="/dashboard/settings">⚙️ Configuración</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info">
+                    <div class="user-email" id="user-email">Loading...</div>
+                    <div class="user-plan" id="user-plan">...</div>
+                </div>
+                <button class="btn-logout" onclick="logout()">🚪 Cerrar sesión</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="/dashboard">Dashboard</a>
+                <span>›</span>
+                <a href="/dashboard/projects">Proyectos</a>
+                <span>›</span>
+                <span id="breadcrumb-project">Cargando...</span>
+            </div>
+
+            <div class="page-header" id="project-header">
+                <!-- Will be loaded dynamically -->
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="stats-grid">
+                <!-- Will be loaded dynamically -->
+            </div>
+
+            <!-- API Key Section -->
+            <div class="section">
+                <h2 class="section-title">🔑 API Key del Proyecto</h2>
+                <div class="api-key-container">
+                    <div class="api-key-label">Usa esta clave para acceder a las colecciones de este proyecto:</div>
+                    <div class="api-key-display">
+                        <div class="api-key-value" id="api-key-value">Cargando...</div>
+                        <button class="btn-copy-key" id="copy-key-btn" onclick="copyApiKey()">
+                            📋 Copiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collections Section -->
+            <div class="section">
+                <h2 class="section-title">📚 Colecciones</h2>
+                <div class="collections-grid" id="collections-grid">
+                    <div class="empty-collections">
+                        <p>Cargando colecciones...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAG Query Section -->
+            <div class="section">
+                <h2 class="section-title">🤖 Consulta RAG (Inteligencia Artificial)</h2>
+                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                    Haz preguntas sobre tus documentos y obtén respuestas generadas por IA.
+                    Solo disponible para colecciones con embeddings (terminan en <code>_vectors</code>).
+                </p>
+
+                <!-- Collection Selector -->
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label" for="rag-collection">Selecciona una colección RAG</label>
+                    <select id="rag-collection" class="form-select" disabled>
+                        <option value="">Cargando colecciones...</option>
+                    </select>
+                    <div class="form-hint">Solo se muestran colecciones con vectores de embeddings</div>
+                </div>
+
+                <!-- Query Input -->
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label" for="rag-query">Tu pregunta</label>
+                    <textarea id="rag-query" class="form-textarea"
+                        placeholder="ej: ¿Cuáles son los principales candidatos presidenciales?" rows="3"
+                        disabled></textarea>
+                    <div class="form-hint">La IA buscará en tus documentos para responder</div>
+                </div>
+
+                <!-- Submit Button -->
+                <button id="rag-submit-btn" class="btn btn-primary" onclick="submitRagQuery()" disabled
+                    style="width: 100%; margin-bottom: var(--spacing-md);">
+                    🚀 Consultar IA
+                </button>
+
+                <!-- Loading State -->
+                <div id="rag-loading" class="rag-loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">
+                        <div class="loading-title">Procesando tu consulta...</div>
+                        <div class="loading-steps" id="loading-steps">
+                            <div class="loading-step active">🔍 Analizando tu pregunta</div>
+                            <div class="loading-step">📚 Buscando en tus documentos</div>
+                            <div class="loading-step">🤖 Generando respuesta con IA</div>
+                        </div>
+                        <div class="loading-hint">Esto puede tomar 10-15 segundos</div>
+                    </div>
+                </div>
+
+                <!-- Response Container -->
+                <div id="rag-response" class="rag-response" style="display: none;">
+                    <div class="response-header">
+                        <h3>💡 Respuesta</h3>
+                        <button class="btn-clear" onclick="clearRagResponse()">✕ Limpiar</button>
+                    </div>
+                    <div class="response-content" id="response-content"></div>
+                    <div class="response-sources" id="response-sources-container">
+                        <!-- Sources will be loaded here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <script>
+        const projectId = "{{ project_id }}";
+
+        // Require authentication
+        (async () => {
+            const user = await requireAuth();
+            if (!user) return;
+
+            // Load user info
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('user-plan').textContent = user.plan;
+
+            // Load project details
+            await loadProjectDetails();
+        })();
+
+        async function loadProjectDetails() {
+            try {
+                const response = await apiCall(`/api/v1/projects/${projectId}`);
+                const project = await response.json();
+
+                // Update breadcrumb
+                document.getElementById('breadcrumb-project').textContent = project.name;
+
+                // Calculate days left
+                const expiresAt = new Date(project.expires_at);
+                const now = new Date();
+                const daysLeft = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24));
+                const isExpired = daysLeft <= 0;
+
+                // Update header
+                document.getElementById('project-header').innerHTML = `
+                    <div class="project-title-row">
+                        <div class="project-title">📁 ${project.name}</div>
+                        <span class="project-status-badge ${isExpired ? 'expired' : 'active'}">
+                            ${isExpired ? 'Expirado' : 'Activo'}
+                        </span>
+                    </div>
+                    <div class="project-description">${project.description || 'Sin descripción'}</div>
+                    <div class="project-meta">
+                        <div class="meta-item">
+                            <span>⏰</span>
+                            <span>${isExpired ? 'Expirado' : `Expira en ${daysLeft} días`}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>🔑</span>
+                            <span>${project.slug}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>🗄️</span>
+                            <span>${project.database}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Update stats
+                document.getElementById('stats-grid').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Lecturas</div>
+                        <div class="stat-value">${project.stats.reads_count.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Escrituras</div>
+                        <div class="stat-value">${project.stats.writes_count.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Consultas RAG</div>
+                        <div class="stat-value">${project.stats.rag_queries_count.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Última Actividad</div>
+                        <div class="stat-value" style="font-size: 1.2rem;">
+                            ${project.stats.last_activity ? new Date(project.stats.last_activity).toLocaleDateString() : 'Nunca'}
+                        </div>
+                    </div>
+                `;
+
+                // Fetch and update API key
+                await loadApiKey();
+
+                // Load collections
+                await loadCollections();
+
+            } catch (error) {
+                console.error('Error loading project:', error);
+                showAlert('Error al cargar detalles del proyecto', 'error');
+
+                // Redirect back to projects if not found
+                if (error.message && (error.message.includes('404') || error.message.includes('not found'))) {
+                    setTimeout(() => {
+                        window.location.href = '/dashboard/projects';
+                    }, 2000);
+                }
+            }
+        }
+
+        async function loadApiKey() {
+            try {
+                const response = await apiCall(`/api/v1/projects/${projectId}/api-key`);
+                const data = await response.json();
+
+                document.getElementById('api-key-value').textContent = data.api_key;
+            } catch (error) {
+                console.error('Error loading API key:', error);
+                document.getElementById('api-key-value').textContent = 'Error al cargar API key';
+            }
+        }
+
+        async function loadCollections() {
+            try {
+                const response = await apiCall(`/api/v1/projects/${projectId}/collections`);
+                const data = await response.json();
+
+                const collectionsGrid = document.getElementById('collections-grid');
+
+                if (data.collections.length === 0) {
+                    collectionsGrid.innerHTML = `
+                        <div class="empty-collections">
+                            <p>Aún no hay colecciones. Crea una insertando documentos vía API.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                collectionsGrid.innerHTML = data.collections.map(coll => `
+                    <div class="collection-card">
+                        <div class="collection-name">📁 ${coll.name}</div>
+                        <div class="collection-count">${coll.document_count.toLocaleString()} documentos</div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading collections:', error);
+                document.getElementById('collections-grid').innerHTML = `
+                    <div class="empty-collections">
+                        <p>Error al cargar colecciones</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function copyApiKey() {
+            const apiKey = document.getElementById('api-key-value').textContent;
+            const copyBtn = document.getElementById('copy-key-btn');
+
+            const success = await copyToClipboard(apiKey);
+
+            if (success) {
+                copyBtn.textContent = '✅ ¡Copiado!';
+                copyBtn.classList.add('copied');
+
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copiar';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } else {
+                showAlert('Error al copiar. Por favor copia manualmente.', 'error');
+            }
+        }
+
+        // RAG Query Functions
+        let collectionsData = [];
+
+        async function loadCollections() {
+            try {
+                const response = await apiCall(`/api/v1/projects/${projectId}/collections`);
+                const data = await response.json();
+
+                const collectionsGrid = document.getElementById('collections-grid');
+                const collectionSelect = document.getElementById('rag-collection');
+
+                if (data.collections.length === 0) {
+                    collectionsGrid.innerHTML = `
+                        <div class="empty-collections">
+                            <p>Aún no hay colecciones. Crea una insertando documentos vía API.</p>
+                        </div>
+                    `;
+                    collectionSelect.innerHTML = '<option value="">No hay colecciones disponibles</option>';
+                    return;
+                }
+
+                // Store collections data
+                collectionsData = data.collections;
+
+                // Update collections grid (show all collections)
+                collectionsGrid.innerHTML = data.collections.map(coll => `
+                    <div class="collection-card">
+                        <div class="collection-name">📁 ${coll.name}</div>
+                        <div class="collection-count">${coll.document_count.toLocaleString()} documentos</div>
+                    </div>
+                `).join('');
+
+                // Filter RAG collections (only those ending with _vectors)
+                const ragCollections = data.collections.filter(coll => coll.name.endsWith('_vectors'));
+
+                if (ragCollections.length === 0) {
+                    collectionSelect.innerHTML = '<option value="">No hay colecciones RAG disponibles</option>';
+                    collectionSelect.disabled = true;
+                    document.getElementById('rag-query').disabled = true;
+                    return;
+                }
+
+                // Update collection selector (only RAG collections)
+                // IMPORTANT: Store the name WITHOUT _vectors because backend adds it automatically
+                collectionSelect.innerHTML = '<option value="">Selecciona una colección RAG</option>' +
+                    ragCollections.map(coll => {
+                        // Remove _vectors suffix for both display AND value
+                        const baseName = coll.name.replace('_vectors', '');
+                        return `<option value="${baseName}">${baseName} (${coll.document_count} docs)</option>`;
+                    }).join('');
+
+                // Enable RAG query form
+                collectionSelect.disabled = false;
+                document.getElementById('rag-query').disabled = false;
+                updateSubmitButton();
+
+            } catch (error) {
+                console.error('Error loading collections:', error);
+                document.getElementById('collections-grid').innerHTML = `
+                    <div class="empty-collections">
+                        <p>Error al cargar colecciones</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateSubmitButton() {
+            const collection = document.getElementById('rag-collection').value;
+            const query = document.getElementById('rag-query').value.trim();
+            const submitBtn = document.getElementById('rag-submit-btn');
+
+            submitBtn.disabled = !collection || !query;
+        }
+
+        // Listen to form changes
+        document.addEventListener('DOMContentLoaded', () => {
+            const collectionSelect = document.getElementById('rag-collection');
+            const queryInput = document.getElementById('rag-query');
+
+            if (collectionSelect) {
+                collectionSelect.addEventListener('change', updateSubmitButton);
+            }
+            if (queryInput) {
+                queryInput.addEventListener('input', updateSubmitButton);
+            }
+        });
+
+        async function submitRagQuery() {
+            const collection = document.getElementById('rag-collection').value;
+            const query = document.getElementById('rag-query').value.trim();
+
+            if (!collection || !query) {
+                showAlert('Por favor selecciona una colección y escribe tu pregunta', 'error');
+                return;
+            }
+
+            // Hide previous response
+            document.getElementById('rag-response').style.display = 'none';
+
+            // Show loading state
+            const loadingDiv = document.getElementById('rag-loading');
+            loadingDiv.style.display = 'block';
+
+            // Animate loading steps
+            animateLoadingSteps();
+
+            try {
+                const response = await fetch(`/api/v1/collections/${collection}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': await getProjectApiKey(),
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        top_k: 5
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error en la consulta RAG');
+                }
+
+                const data = await response.json();
+
+                // Hide loading
+                loadingDiv.style.display = 'none';
+
+                // Show response
+                displayRagResponse(data);
+
+            } catch (error) {
+                console.error('Error in RAG query:', error);
+                loadingDiv.style.display = 'none';
+                showAlert('Error al procesar tu consulta. Por favor intenta de nuevo.', 'error');
+            }
+        }
+
+        async function getProjectApiKey() {
+            // Get the API key from the page
+            const apiKeyEl = document.getElementById('api-key-value');
+            return apiKeyEl.textContent;
+        }
+
+        function animateLoadingSteps() {
+            const steps = document.querySelectorAll('.loading-step');
+            let currentStep = 0;
+
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    steps.forEach(step => step.classList.remove('active'));
+                    steps[currentStep].classList.add('active');
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 4000); // Change step every 4 seconds
+        }
+
+        function displayRagResponse(data) {
+            const responseDiv = document.getElementById('rag-response');
+            const contentDiv = document.getElementById('response-content');
+            const sourcesContainer = document.getElementById('response-sources-container');
+
+            // Format and display answer with better readability
+            const formattedAnswer = formatAnswer(data.answer);
+            contentDiv.innerHTML = formattedAnswer;
+
+            // Display sources (handle both 'content' and 'text' fields)
+            if (data.sources && data.sources.length > 0) {
+                sourcesContainer.innerHTML = '<h4>📄 Fuentes utilizadas</h4>' +
+                    data.sources.map((source, index) => {
+                        const sourceText = source.text || source.content || '';
+                        const preview = sourceText.substring(0, 300);
+                        return `
+                            <div class="source-item">
+                                <strong>Fuente ${index + 1}:</strong><br>
+                                ${preview}${sourceText.length > 300 ? '...' : ''}
+                            </div>
+                        `;
+                    }).join('');
+            } else {
+                sourcesContainer.innerHTML = '<h4>📄 Fuentes utilizadas</h4><p style="color: var(--text-secondary);">No se encontraron fuentes específicas</p>';
+            }
+
+            responseDiv.style.display = 'block';
+
+            // Scroll to response
+            responseDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function formatAnswer(text) {
+            if (!text) return '';
+
+            // Convert markdown-style formatting to HTML
+            let formatted = text;
+
+            // Convert **bold** to <strong>
+            formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+            // Convert *italic* to <em>
+            formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+            // Convert bullet points (•, *, -) to proper list items
+            const lines = formatted.split('\n');
+            let inList = false;
+            let result = [];
+
+            for (let line of lines) {
+                const trimmed = line.trim();
+
+                // Check if line is a bullet point
+                if (trimmed.match(/^[•\*\-]\s+/)) {
+                    if (!inList) {
+                        result.push('<ul style="margin: 0.5rem 0; padding-left: 1.5rem;">');
+                        inList = true;
+                    }
+                    const content = trimmed.replace(/^[•\*\-]\s+/, '');
+                    result.push(`<li style="margin: 0.25rem 0;">${content}</li>`);
+                } else {
+                    if (inList) {
+                        result.push('</ul>');
+                        inList = false;
+                    }
+                    if (trimmed) {
+                        result.push(`<p style="margin: 0.75rem 0;">${trimmed}</p>`);
+                    }
+                }
+            }
+
+            if (inList) {
+                result.push('</ul>');
+            }
+
+            return result.join('');
+        }
+
+        function clearRagResponse() {
+            document.getElementById('rag-response').style.display = 'none';
+            document.getElementById('rag-query').value = '';
+            updateSubmitButton();
+        }
+    </script>
+</body>
+
+</html>

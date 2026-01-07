@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación API - SonqoBase</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .docs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+
+        .docs-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-xl) 0;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .docs-title {
+            font-size: 3rem;
+            font-weight: 900;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .docs-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        .docs-nav {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            position: sticky;
+            top: var(--spacing-md);
+        }
+
+        .docs-nav h3 {
+            margin-bottom: var(--spacing-sm);
+            color: var(--accent-primary);
+        }
+
+        .docs-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .docs-nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .docs-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .docs-nav a:hover {
+            color: var(--accent-primary);
+        }
+
+        .docs-section {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .docs-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+            color: var(--accent-primary);
+        }
+
+        .docs-section h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .docs-section h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: var(--spacing-sm);
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            margin: var(--spacing-sm) 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .code-block code {
+            color: var(--accent-primary);
+        }
+
+        .endpoint {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-primary);
+            padding: var(--spacing-md);
+            margin: var(--spacing-sm) 0;
+            border-radius: 4px;
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-right: 0.5rem;
+        }
+
+        .method-get {
+            background: #61affe;
+            color: white;
+        }
+
+        .method-post {
+            background: #49cc90;
+            color: white;
+        }
+
+        .method-put {
+            background: #fca130;
+            color: white;
+        }
+
+        .method-delete {
+            background: #f93e3e;
+            color: white;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--spacing-sm) 0;
+        }
+
+        .param-table th,
+        .param-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .param-table th {
+            background: var(--bg-secondary);
+            font-weight: 700;
+        }
+
+        .param-required {
+            color: var(--error-color);
+            font-weight: 700;
+        }
+
+        .param-optional {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .alert {
+            padding: var(--spacing-md);
+            border-radius: 8px;
+            margin: var(--spacing-sm) 0;
+        }
+
+        .alert-info {
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 2px solid #ffc107;
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--accent-gradient);
+            color: var(--bg-primary);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="docs-container">
+        <div class="docs-header">
+            <h1 class="docs-title">📚 Documentación de la API</h1>
+            <p class="docs-subtitle">SonqoBase - Base de Datos Vectorial Efímera como Servicio</p>
+            <div style="margin-top: var(--spacing-md);">
+                <a href="/docs" class="btn-primary">🔗 OpenAPI (Swagger)</a>
+                <a href="/dashboard" class="btn-primary" style="margin-left: 1rem;">🎯 Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="docs-section" id="quick-start">
+            <h2>🚀 Inicio Rápido</h2>
+            <p>SonqoBase te permite almacenar y consultar documentos usando IA en minutos.</p>
+
+            <h3>1. Obtén tu API Key</h3>
+            <p>Regístrate en el <a href="/dashboard/register">Dashboard</a> y crea un proyecto. Recibirás dos tipos de
+                claves:</p>
+            <ul>
+                <li><strong>User API Key</strong>: Para gestionar proyectos (empieza con <code>sonqo_user_</code>)</li>
+                <li><strong>Project API Key</strong>: Para acceder a colecciones (empieza con <code>sonqo_proj_</code>)
+                </li>
+            </ul>
+
+            <h3>2. Inserta Documentos</h3>
+            <div class="code-block"><code>curl -X POST 'https://api.sonqobase.com/api/v1/collections/mi_coleccion' \
+  -H 'X-API-Key: sonqo_proj_tu_clave_aqui' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "documents": [
+      {
+        "content": "Python es un lenguaje de programación",
+        "metadata": {"category": "tech"}
+      }
+    ]
+  }'</code></div>
+
+            <h3>3. Consulta con IA (RAG)</h3>
+            <div class="code-block"><code>curl -X POST 'https://api.sonqobase.com/api/v1/collections/mi_coleccion/query' \
+  -H 'X-API-Key: sonqo_proj_tu_clave_aqui' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "¿Qué es Python?",
+    "top_k": 5
+  }'</code></div>
+        </div>
+
+        <!-- Authentication -->
+        <div class="docs-section" id="authentication">
+            <h2>🔐 Autenticación</h2>
+            <p>Todas las peticiones requieren una API Key en el header <code>X-API-Key</code>.</p>
+
+            <h3>Tipos de API Keys</h3>
+            <table class="param-table">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Prefijo</th>
+                        <th>Uso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>User Key</strong></td>
+                        <td><code>sonqo_user_</code></td>
+                        <td>Gestionar proyectos, ver stats</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Project Key</strong></td>
+                        <td><code>sonqo_proj_</code></td>
+                        <td>Acceder a colecciones, hacer queries RAG</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ Seguridad:</strong> Nunca compartas tus API Keys. Guárdalas en variables de entorno.
+            </div>
+        </div>
+
+        <!-- Collections -->
+        <div class="docs-section" id="collections">
+            <h2>📁 Colecciones</h2>
+            <p>Las colecciones almacenan tus documentos. Hay dos formas de insertar datos:</p>
+
+            <h3>Opción 1: Documentos JSON Simples</h3>
+            <p>Para insertar documentos JSON sin embeddings (búsqueda tradicional).</p>
+
+            <div class="endpoint">
+                <span class="endpoint-method method-post">POST</span>
+                <code>/api/v1/collections/{collection}</code>
+            </div>
+
+            <h4>Body Parameters</h4>
+            <table class="param-table">
+                <thead>
+                    <tr>
+                        <th>Parámetro</th>
+                        <th>Tipo</th>
+                        <th>Requerido</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>documents</code></td>
+                        <td>array</td>
+                        <td class="param-required">Sí</td>
+                        <td>Lista de documentos JSON a insertar</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Ejemplo</h4>
+            <div class="code-block"><code>curl -X POST 'https://api.sonqobase.com/api/v1/collections/mi_coleccion' \
+  -H 'X-API-Key: sonqo_proj_tu_clave' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "documents": [
+      {
+        "content": "Contenido del documento",
+        "metadata": {"author": "Juan", "date": "2026-01-07"}
+      }
+    ]
+  }'</code></div>
+
+            <h3>Opción 2: Ingesta de PDFs (con Embeddings)</h3>
+            <p>Para subir PDFs que se convierten automáticamente en embeddings para consultas RAG.</p>
+
+            <div class="endpoint">
+                <span class="endpoint-method method-post">POST</span>
+                <code>/api/v1/collections/{collection}/ingest/files</code>
+            </div>
+
+            <h4>Form Parameters</h4>
+            <table class="param-table">
+                <thead>
+                    <tr>
+                        <th>Parámetro</th>
+                        <th>Tipo</th>
+                        <th>Requerido</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>file</code></td>
+                        <td>file</td>
+                        <td class="param-required">Sí</td>
+                        <td>Archivo PDF a procesar</td>
+                    </tr>
+                    <tr>
+                        <td><code>metadata</code></td>
+                        <td>string (JSON)</td>
+                        <td class="param-optional">No</td>
+                        <td>Metadatos adicionales</td>
+                    </tr>
+                    <tr>
+                        <td><code>chunk_size</code></td>
+                        <td>integer</td>
+                        <td class="param-optional">No (default: 500)</td>
+                        <td>Tamaño de los chunks de texto</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Ejemplo</h4>
+            <div class="code-block"><code>curl -X POST 'https://api.sonqobase.com/api/v1/collections/documentos/ingest/files' \
+  -H 'X-API-Key: sonqo_proj_tu_clave' \
+  -F 'file=@documento.pdf' \
+  -F 'metadata={"category":"legal"}'</code></div>
+
+            <div class="alert alert-info">
+                <strong>💡 ¿Cuál usar?</strong><br>
+                - Usa <code>POST /{collection}</code> para datos estructurados (JSON)<br>
+                - Usa <code>POST /{collection}/ingest/files</code> para PDFs que quieras consultar con IA
+            </div>
+
+            <h3>Leer Documentos</h3>
+            <div class="endpoint">
+                <span class="endpoint-method method-get">GET</span>
+                <code>/api/v1/collections/{collection}/documents</code>
+            </div>
+
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+                <thead>
+                    <tr>
+                        <th>Parámetro</th>
+                        <th>Tipo</th>
+                        <th>Default</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>limit</code></td>
+                        <td>integer</td>
+                        <td>100</td>
+                        <td>Número máximo de documentos</td>
+                    </tr>
+                    <tr>
+                        <td><code>skip</code></td>
+                        <td>integer</td>
+                        <td>0</td>
+                        <td>Documentos a saltar (paginación)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- RAG Queries -->
+        <div class="docs-section" id="rag">
+            <h2>🤖 Consultas RAG (IA)</h2>
+            <p>Haz preguntas sobre tus documentos y obtén respuestas generadas por IA.</p>
+
+            <div class="alert alert-info">
+                <strong>💡 Nota:</strong> Solo funciona con colecciones que tienen embeddings (creadas con PDFs o
+                texto).
+            </div>
+
+            <h3>Consultar con IA</h3>
+            <div class="endpoint">
+                <span class="endpoint-method method-post">POST</span>
+                <code>/api/v1/collections/{collection}/query</code>
+            </div>
+
+            <h4>Body Parameters</h4>
+            <table class="param-table">
+                <thead>
+                    <tr>
+                        <th>Parámetro</th>
+                        <th>Tipo</th>
+                        <th>Requerido</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>query</code></td>
+                        <td>string</td>
+                        <td class="param-required">Sí</td>
+                        <td>Tu pregunta en lenguaje natural</td>
+                    </tr>
+                    <tr>
+                        <td><code>top_k</code></td>
+                        <td>integer</td>
+                        <td class="param-optional">No (default: 5)</td>
+                        <td>Número de documentos relevantes a usar</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Ejemplo de Request</h4>
+            <div class="code-block"><code>{
+  "query": "¿Cuáles son los objetivos de educación?",
+  "top_k": 5
+}</code></div>
+
+            <h4>Ejemplo de Response</h4>
+            <div class="code-block"><code>{
+  "answer": "Los objetivos de educación incluyen...",
+  "sources": [
+    {
+      "text": "Fragmento del documento relevante...",
+      "metadata": {...}
+    }
+  ]
+}</code></div>
+
+            <div class="alert alert-warning">
+                <strong>⏱️ Tiempo de respuesta:</strong> Las consultas RAG pueden tomar 10-15 segundos debido al
+                procesamiento de IA.
+            </div>
+        </div>
+
+        <!-- PDF Ingestion -->
+        <div class="docs-section" id="pdf">
+            <h2>📄 Ingesta de PDFs</h2>
+            <p>Sube PDFs y conviértelos automáticamente en una base de conocimiento consultable con IA.</p>
+
+            <h3>Subir PDF</h3>
+            <div class="endpoint">
+                <span class="endpoint-method method-post">POST</span>
+                <code>/api/v1/collections/{collection}/ingest/pdf</code>
+            </div>
+
+            <h4>Ejemplo con cURL</h4>
+            <div class="code-block"><code>curl -X POST 'https://api.sonqobase.com/api/v1/collections/documentos/ingest/pdf' \
+  -H 'X-API-Key: sonqo_proj_tu_clave_aqui' \
+  -F 'file=@documento.pdf'</code></div>
+
+            <h4>Proceso</h4>
+            <ol>
+                <li>El PDF se sube y se guarda</li>
+                <li>Se extrae el texto de cada página</li>
+                <li>El texto se divide en chunks (fragmentos)</li>
+                <li>Se generan embeddings (vectores) para cada chunk</li>
+                <li>Los vectores se guardan en <code>{collection}_vectors</code></li>
+            </ol>
+
+            <div class="alert alert-info">
+                <strong>💡 Tip:</strong> Después de subir un PDF, puedes hacer consultas RAG sobre su contenido.
+            </div>
+        </div>
+
+        <!-- Projects -->
+        <div class="docs-section" id="projects">
+            <h2>📦 Proyectos</h2>
+            <p>Los proyectos agrupan tus colecciones y tienen su propia API Key.</p>
+
+            <h3>Listar Proyectos</h3>
+            <div class="endpoint">
+                <span class="endpoint-method method-get">GET</span>
+                <code>/api/v1/projects</code>
+            </div>
+            <p><strong>Requiere:</strong> User API Key</p>
+
+            <h3>Obtener Detalles de Proyecto</h3>
+            <div class="endpoint">
+                <span class="endpoint-method method-get">GET</span>
+                <code>/api/v1/projects/{project_id}</code>
+            </div>
+
+            <h3>Obtener API Key del Proyecto</h3>
+            <div class="endpoint">
+                <span class="endpoint-method method-get">GET</span>
+                <code>/api/v1/projects/{project_id}/api-key</code>
+            </div>
+        </div>
+
+        <!-- Rate Limits -->
+        <div class="docs-section" id="limits">
+            <h2>⚡ Límites y Planes</h2>
+            <p>Los límites dependen de tu plan:</p>
+
+            <table class="param-table">
+                <thead>
+                    <tr>
+                        <th>Plan</th>
+                        <th>Proyectos</th>
+                        <th>Lecturas/mes</th>
+                        <th>Escrituras/mes</th>
+                        <th>Consultas RAG/mes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Free</strong></td>
+                        <td>1</td>
+                        <td>10,000</td>
+                        <td>1,000</td>
+                        <td>100</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pro</strong></td>
+                        <td>5</td>
+                        <td>100,000</td>
+                        <td>10,000</td>
+                        <td>1,000</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Enterprise</strong></td>
+                        <td>Ilimitado</td>
+                        <td>Ilimitado</td>
+                        <td>Ilimitado</td>
+                        <td>Ilimitado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Error Codes -->
+        <div class="docs-section" id="errors">
+            <h2>❌ Códigos de Error</h2>
+            <table class="param-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>400</code></td>
+                        <td>Bad Request - Parámetros inválidos</td>
+                    </tr>
+                    <tr>
+                        <td><code>401</code></td>
+                        <td>Unauthorized - API Key inválida o faltante</td>
+                    </tr>
+                    <tr>
+                        <td><code>403</code></td>
+                        <td>Forbidden - Sin permisos para este recurso</td>
+                    </tr>
+                    <tr>
+                        <td><code>404</code></td>
+                        <td>Not Found - Recurso no encontrado</td>
+                    </tr>
+                    <tr>
+                        <td><code>429</code></td>
+                        <td>Too Many Requests - Límite de rate excedido</td>
+                    </tr>
+                    <tr>
+                        <td><code>500</code></td>
+                        <td>Internal Server Error - Error del servidor</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Support -->
+        <div class="docs-section" id="support">
+            <h2>💬 Soporte</h2>
+            <p>¿Necesitas ayuda? Contáctanos:</p>
+            <ul>
+                <li>📧 Email: <a href="mailto:support@sonqobase.com">support@sonqobase.com</a></li>
+                <li>💬 Discord: <a href="#">Únete a nuestra comunidad</a></li>
+                <li>📖 GitHub: <a href="#">github.com/sonqobase</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>

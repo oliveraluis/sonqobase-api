@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyectos - Dashboard SonqoBase</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Inherit from dashboard.css and add project-specific styles */
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--bg-card);
+            border-right: 2px solid var(--border-color);
+            padding: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .sidebar-logo-icon {
+            font-size: 2rem;
+        }
+
+        .sidebar-logo-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 0.875rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .sidebar-footer {
+            padding-top: var(--spacing-md);
+            border-top: 2px solid var(--border-color);
+        }
+
+        .user-info {
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .user-plan {
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: var(--spacing-lg);
+            background: var(--bg-primary);
+            overflow-y: auto;
+        }
+
+        .page-header {
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 900;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: var(--spacing-md);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.2);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .project-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .project-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .project-status.active {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-primary);
+        }
+
+        .project-status.expired {
+            background: rgba(255, 68, 68, 0.2);
+            color: var(--error-color);
+        }
+
+        .project-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .project-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-lg) * 2;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        /* Skeleton Loader */
+        .skeleton {
+            background: linear-gradient(90deg,
+                    var(--bg-card) 0%,
+                    var(--bg-secondary) 50%,
+                    var(--bg-card) 100%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: var(--spacing-md);
+        }
+
+        .skeleton-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .skeleton-title {
+            width: 60%;
+            height: 24px;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-badge {
+            width: 60px;
+            height: 20px;
+        }
+
+        .skeleton-text {
+            width: 80%;
+            height: 16px;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .skeleton-meta {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+        }
+
+        .skeleton-meta-item {
+            width: 100px;
+            height: 14px;
+        }
+
+        .skeleton-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .skeleton-stat {
+            text-align: center;
+        }
+
+        .skeleton-stat-value {
+            width: 40px;
+            height: 28px;
+            margin: 0 auto 0.25rem;
+        }
+
+        .skeleton-stat-label {
+            width: 60px;
+            height: 12px;
+            margin: 0 auto;
+        }
+
+        /* Fix button width */
+        .btn-create {
+            padding: 0.875rem 1.5rem;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid var(--border-color);
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="sidebar-logo-icon">🗄️</span>
+                <span class="sidebar-logo-text">SonqoBase</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard">📊 Resumen</a>
+                <a href="/dashboard/projects" class="active">🗂️ Proyectos</a>
+                <a href="/dashboard/settings">⚙️ Configuración</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info">
+                    <div class="user-email" id="user-email">Loading...</div>
+                    <div class="user-plan" id="user-plan">...</div>
+                </div>
+                <button class="btn-logout" onclick="logout()">🚪 Cerrar sesión</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">Tus Proyectos</h1>
+                <button class="btn btn-primary btn-create" onclick="window.location.href='/dashboard/projects/new'">
+                    + Crear Proyecto
+                </button>
+            </div>
+
+            <div class="projects-grid" id="projects-grid">
+                <!-- Skeleton loader -->
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div>
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text"></div>
+                        </div>
+                        <div class="skeleton skeleton-badge"></div>
+                    </div>
+                    <div class="skeleton-meta">
+                        <div class="skeleton skeleton-meta-item"></div>
+                        <div class="skeleton skeleton-meta-item"></div>
+                    </div>
+                    <div class="skeleton-stats">
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div>
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text"></div>
+                        </div>
+                        <div class="skeleton skeleton-badge"></div>
+                    </div>
+                    <div class="skeleton-meta">
+                        <div class="skeleton skeleton-meta-item"></div>
+                        <div class="skeleton skeleton-meta-item"></div>
+                    </div>
+                    <div class="skeleton-stats">
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div>
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text"></div>
+                        </div>
+                        <div class="skeleton skeleton-badge"></div>
+                    </div>
+                    <div class="skeleton-meta">
+                        <div class="skeleton skeleton-meta-item"></div>
+                        <div class="skeleton skeleton-meta-item"></div>
+                    </div>
+                    <div class="skeleton-stats">
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                        <div class="skeleton-stat">
+                            <div class="skeleton skeleton-stat-value"></div>
+                            <div class="skeleton skeleton-stat-label"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <script>
+        // Require authentication
+        (async () => {
+            const user = await requireAuth();
+            if (!user) return;
+
+            // Load user info
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('user-plan').textContent = user.plan;
+
+            // Load projects
+            await loadProjects();
+        })();
+
+        async function loadProjects() {
+            try {
+                const response = await apiCall('/api/v1/projects');
+                const projects = await response.json();
+
+                const projectsGrid = document.getElementById('projects-grid');
+
+                if (projects.length === 0) {
+                    projectsGrid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📁</div>
+                            <h3>Aún no tienes proyectos</h3>
+                            <p>Crea tu primer proyecto para comenzar</p>
+                            <button class="btn btn-primary" onclick="window.location.href='/dashboard/projects/new'" style="margin-top: 1rem;">
+                                + Crear Proyecto
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                projectsGrid.innerHTML = projects.map(project => {
+                    const expiresAt = new Date(project.expires_at);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24));
+                    const isExpired = daysLeft <= 0;
+
+                    return `
+                        <div class="project-card" onclick="window.location.href='/dashboard/projects/${project.project_id}'">
+                            <div class="project-header">
+                                <div>
+                                    <div class="project-name">📁 ${project.name}</div>
+                                    <div class="project-description">${project.description || 'Sin descripción'}</div>
+                                </div>
+                                <span class="project-status ${isExpired ? 'expired' : 'active'}">
+                                    ${isExpired ? 'Expirado' : 'Activo'}
+                                </span>
+                            </div>
+                            
+                            <div class="project-meta">
+                                <div>⏰ ${isExpired ? 'Expirado' : `${daysLeft} días restantes`}</div>
+                                <div>🔑 ${project.slug}</div>
+                            </div>
+
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value">${project.stats.reads_count.toLocaleString()}</div>
+                                    <div class="stat-label">Lecturas</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${project.stats.writes_count.toLocaleString()}</div>
+                                    <div class="stat-label">Escrituras</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${project.stats.rag_queries_count.toLocaleString()}</div>
+                                    <div class="stat-label">Consultas RAG</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                showAlert('Error al cargar proyectos', 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

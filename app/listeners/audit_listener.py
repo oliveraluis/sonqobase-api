@@ -9,10 +9,15 @@ from datetime import datetime, timezone
 from typing import Literal, Optional
 
 from app.infra.event_bus import get_event_bus
+from app.infra.project_repository import ProjectRepository
 from app.domain.events import (
+    ProjectCreatedEvent,
     DocumentReadEvent,
     DocumentWrittenEvent,
     RagQueryExecutedEvent,
+    PdfIngestStartedEvent,
+    PdfIngestCompletedEvent,
+    PdfIngestFailedEvent,
     RagIngestCompletedEvent,
 )
 
@@ -54,6 +59,11 @@ def track_operation(event: AuditEvent):
 @event_bus.subscribe(DocumentReadEvent)
 async def on_document_read(event: DocumentReadEvent):
     """Registrar lectura de documentos"""
+    # Incrementar contador del proyecto
+    project_repo = ProjectRepository()
+    project_repo.increment_reads(event.project_id, event.document_count)
+    
+    # Track en cola (para futuro background worker)
     track_operation(AuditEvent(
         user_id=event.user_id,
         project_id=event.project_id,
@@ -68,6 +78,11 @@ async def on_document_read(event: DocumentReadEvent):
 @event_bus.subscribe(DocumentWrittenEvent)
 async def on_document_written(event: DocumentWrittenEvent):
     """Registrar escritura de documento"""
+    # Incrementar contador del proyecto
+    project_repo = ProjectRepository()
+    project_repo.increment_writes(event.project_id, 1)
+    
+    # Track en cola (para futuro background worker)
     track_operation(AuditEvent(
         user_id=event.user_id,
         project_id=event.project_id,
@@ -83,6 +98,11 @@ async def on_document_written(event: DocumentWrittenEvent):
 @event_bus.subscribe(RagQueryExecutedEvent)
 async def on_rag_query(event: RagQueryExecutedEvent):
     """Registrar consulta RAG"""
+    # Incrementar contador del proyecto
+    project_repo = ProjectRepository()
+    project_repo.increment_rag_queries(event.project_id, 1)
+    
+    # Track en cola (para futuro background worker)
     track_operation(AuditEvent(
         user_id=event.user_id,
         project_id=event.project_id,
