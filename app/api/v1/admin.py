@@ -2,7 +2,7 @@
 Endpoints de administración (requieren Master API Key).
 """
 import logging
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
@@ -11,6 +11,7 @@ from app.services.admin.update_user_plan import UpdateUserPlanService
 from app.services.admin.block_user import BlockUserService
 from app.infra.user_repository import UserRepository
 from app.infra.plan_repository import PlanRepository
+from app.dependencies.auth import require_master_key
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -59,20 +60,13 @@ def get_block_user_service() -> BlockUserService:
 @router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     payload: CreateUserRequest,
-    request: Request,
     service: CreateUserService = Depends(get_create_user_service),
+    _: str = Depends(require_master_key),
 ):
     """
     Crear un nuevo usuario con un plan específico.
     Requiere Master API Key.
     """
-    # Verificar autenticación (el middleware ya lo hizo)
-    if request.state.auth_level != "master":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Master API Key required"
-        )
-    
     try:
         result = service.execute(
             email=payload.email,
@@ -103,18 +97,13 @@ async def create_user(
 async def update_user_plan(
     user_id: str,
     payload: UpdatePlanRequest,
-    request: Request,
     service: UpdateUserPlanService = Depends(get_update_plan_service),
+    _: str = Depends(require_master_key),
 ):
     """
     Actualizar el plan de un usuario (upgrade/downgrade).
     Requiere Master API Key.
     """
-    if request.state.auth_level != "master":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Master API Key required"
-        )
     
     try:
         result = service.execute(user_id, payload.plan_name)
@@ -132,18 +121,13 @@ async def update_user_plan(
 @router.post("/users/{user_id}/block")
 async def block_user(
     user_id: str,
-    request: Request,
     service: BlockUserService = Depends(get_block_user_service),
+    _: str = Depends(require_master_key),
 ):
     """
     Bloquear un usuario.
     Requiere Master API Key.
     """
-    if request.state.auth_level != "master":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Master API Key required"
-        )
     
     try:
         result = service.execute(user_id, block=True)
@@ -161,18 +145,13 @@ async def block_user(
 @router.post("/users/{user_id}/unblock")
 async def unblock_user(
     user_id: str,
-    request: Request,
     service: BlockUserService = Depends(get_block_user_service),
+    _: str = Depends(require_master_key),
 ):
     """
     Desbloquear un usuario.
     Requiere Master API Key.
     """
-    if request.state.auth_level != "master":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Master API Key required"
-        )
     
     try:
         result = service.execute(user_id, block=False)

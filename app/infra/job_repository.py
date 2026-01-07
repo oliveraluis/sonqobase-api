@@ -4,8 +4,9 @@ Repository para gestión de Jobs de procesamiento.
 import logging
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
-from pymongo.database import Database
-from bson import ObjectId
+
+from app.infra.mongo_client import get_mongo_client
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,10 @@ class JobRepository:
     Repositorio para tracking de jobs de procesamiento asíncrono.
     """
     
-    def __init__(self, db: Database):
-        self.collection = db['jobs']
+    def __init__(self):
+        client = get_mongo_client()
+        meta_db = client[settings.mongo_meta_db]
+        self.collection = meta_db['jobs']
         
         # Crear índices
         self.collection.create_index("job_id", unique=True)

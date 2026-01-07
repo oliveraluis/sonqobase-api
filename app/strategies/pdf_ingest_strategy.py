@@ -39,7 +39,7 @@ class PdfIngestStrategy(IngestStrategy):
         client = MongoClient(settings.mongo_uri)
         meta_db = client[settings.mongo_meta_db]
         
-        self.job_repo = JobRepository(meta_db)
+        self.job_repo = JobRepository()
         self.pdf_storage = PdfStorage(meta_db)
     
     async def validate(self, user: User, plan: Plan, source: UploadFile) -> None:
