@@ -63,8 +63,21 @@ class GenerateOTPService:
         # We still do this sync to ensure consistency before accepting new request
         self.otp_repo.invalidate_user_otps(user_id)
         
-        # Generate 6-digit OTP code & ID (In-Memory)
-        otp_code = str(random.randint(100000, 999999))
+        # Generate OTP code & ID (In-Memory)
+        # Check environment for DEV mode or MOCK OTP
+        from app.config import settings
+        
+        is_dev = settings.environment == "development"
+        use_mock = settings.mock_otp or is_dev
+        
+        if use_mock:
+            otp_code = "000000"
+            should_mail = False
+            logger.info(f"🔧 DEV MODE: Generated MOCK OTP '000000' for user {user_id}")
+        else:
+            otp_code = str(random.randint(100000, 999999))
+            should_mail = True
+            
         otp_id = f"otp_{uuid.uuid4().hex[:12]}"
         
         # Publish OtpCreatedEvent (Async Persistence & Email)
@@ -78,7 +91,8 @@ class GenerateOTPService:
             email=email,
             otp_code=otp_code,
             user_name=user_name,
-            otp_type="login"
+            otp_type="login",
+            should_send_email=should_mail
         )
         
         # Fire and forget (persistence + email listeners)
@@ -88,7 +102,7 @@ class GenerateOTPService:
         
         return {
             "success": True,
-            "message": "OTP sent to your email",
+            "message": "OTP sent to your email" if should_mail else "DEV MODE: Use code 000000",
             "email": email,
             "otp_id": otp_id,
             "expires_in": 60  # 1 minute

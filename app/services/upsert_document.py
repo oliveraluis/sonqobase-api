@@ -12,15 +12,11 @@ from app.infra.mongo_client import get_mongo_client
 class UpsertDocumentService:
     """
     Servicio estilo Firebase: save() que crea o actualiza.
-    Si el documento existe (por _id), lo actualiza.
-    Si no existe, lo crea.
     """
-    def __init__(self, api_key_repo: ApiKeyRepository):
-        self.api_key_repo = api_key_repo
-
+    
     def execute(
         self,
-        api_key: str,
+        project: "Project",
         collection: str,
         document_id: str,
         payload: Dict[str, Any],
@@ -31,21 +27,8 @@ class UpsertDocumentService:
         except InvalidId:
             raise ValueError(f"Invalid document ID format: '{document_id}'. Must be a 24-character hex string.")
         
-        project = self.api_key_repo.get_project_by_key(api_key)
-
-        if not project:
-            raise ValueError("Invalid API Key")
-
-        # MongoDB devuelve datetimes naive, convertir a aware
-        expires_at = project["expires_at"]
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        
-        if expires_at < datetime.now(timezone.utc):
-            raise RuntimeError("Project expired")
-
-        db_name = project["database"]
-        expires_at = project["expires_at"]
+        db_name = project.database.name
+        expires_at = project.expires_at
 
         client = get_mongo_client()
         db = client[db_name]

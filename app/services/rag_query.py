@@ -16,39 +16,27 @@ class RagQueryService:
             self,
             embedding_provider: EmbeddingProvider,
             llm_provider: LLMProvider,
-            api_key_repo: ApiKeyRepository,
     ):
         self.embedding_provider = embedding_provider
         self.llm_provider = llm_provider
-        self.api_key_repo = api_key_repo
 
     async def execute(
             self,
-            api_key: str,
+            project: "Project",
             collection: str,
             query: str,
             top_k: int = 5,
     ) -> Dict[str, Any]:
         start_time = time.time()
         
-        project = self.api_key_repo.get_project_by_key(api_key)
-
-        if not project:
-            raise ValueError("Invalid API key")
-
-        # MongoDB devuelve datetimes naive, convertir a aware
-        expires_at = project["expires_at"]
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        
-        if expires_at < datetime.now(timezone.utc):
-            raise RuntimeError("Project expired")
+        db_name = project.database.name
+        # expired check handled in dependency
 
         query_embedding: List[float] = await self.embedding_provider.embed(query)
 
         client = get_mongo_client()
-        db = client[project["database"]]
-        vector_collection = db[f"{collection}_vectors"]
+        db = client[db_name]
+        vector_collection = db[f"{collection}__vectors"] # Fixed typo: should match ingest collection name
 
         pipeline = [
             {
@@ -59,7 +47,6 @@ class RagQueryService:
                     "numCandidates": top_k * 10,
                     "limit": top_k,
                     "exact": False,
-                    # "filter": {...},                      # si quieres filtrar por metadata/document_id
                 }
             },
             {
@@ -67,7 +54,8 @@ class RagQueryService:
                     "_id": 0,
                     "text": 1,
                     "document_id": 1,
-                    "metadata": 1
+                    "metadata": 1,
+                    "score": {"$meta": "vectorSearchScore"}
                 }
             },
         ]
@@ -119,8 +107,8 @@ RESPUESTA:"""
         # Emit event for audit tracking
         event_bus = get_event_bus()
         await event_bus.publish(RagQueryExecutedEvent(
-            user_id=project["user_id"],
-            project_id=project["project_id"],
+            user_id=project.user_id,
+            project_id=project.id,
             collection=collection,
             query=query,
             results_count=len(results),
@@ -143,7 +131,7 @@ RESPUESTA:"""
                 pass
             
             queries_history.insert_one({
-                "project_id": project["project_id"],
+                "project_id": project.id,
                 "collection": collection,
                 "query": query,
                 "answer": answer,
@@ -155,15 +143,15 @@ RESPUESTA:"""
             # No fallar si el audit log falla
             logger.warning(f"Failed to save query history: {e}")
         
-        return RagQueryResponse(
-            answer=answer,
-            sources=[
-                RagSource(
-                    text=r["text"],
-                    score=r["score"],
-                    document_id=r["document_id"],
-                    metadata=r.get("metadata", {})
-                )
+        return {
+            "answer": answer,
+            "sources": [
+                {
+                   "text": r["text"],
+                   "score": r.get("score"),
+                   "document_id": r["document_id"],
+                   "metadata": r.get("metadata", {})
+                }
                 for r in results
             ]
-        )
+        }

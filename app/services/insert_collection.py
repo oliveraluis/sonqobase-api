@@ -8,22 +8,14 @@ from app.infra.mongo_client import get_mongo_client
 
 
 class InsertCollectionService:
-    def __init__(self, api_key_repo: ApiKeyRepository):
-        self.api_key_repo = api_key_repo
-
     def execute(
         self,
-        api_key: str,
+        project: "Project",
         collection: str,
         payload: Dict[str, Any],
     ) -> dict:
-        project = self.api_key_repo.get_project_by_key(api_key)
-
-        if not project:
-            raise ValueError("Invalid API Key")
-
-        db_name = project["database"]
-        expires_at = project["expires_at"]
+        db_name = project.database.name
+        expires_at = project.expires_at
 
         document = {
             **payload,

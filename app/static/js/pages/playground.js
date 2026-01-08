@@ -156,23 +156,34 @@ const PlaygroundPage = {
 
     async loadCollections() {
         try {
+            console.log('Loading collections for project:', this.projectId);
             const response = await apiCall(`/api/v1/projects/${this.projectId}/collections`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
+            console.log('Collections API response:', data);
 
             const collectionSelect = document.getElementById('rag-collection');
 
-            if (data.collections.length === 0) {
+            if (!data.collections || data.collections.length === 0) {
                 collectionSelect.innerHTML = '<option value="">No hay colecciones disponibles</option>';
+                collectionSelect.disabled = false;
                 return;
             }
 
             this.collectionsData = data.collections;
+            console.log('Total collections:', this.collectionsData.length);
 
             // Filter only vector collections
             const vectorCollections = this.collectionsData.filter(c => c.name.endsWith('_vectors'));
+            console.log('Vector collections found:', vectorCollections.length, vectorCollections);
 
             if (vectorCollections.length === 0) {
                 collectionSelect.innerHTML = '<option value="">No hay colecciones con embeddings</option>';
+                collectionSelect.disabled = false;
                 return;
             }
 
@@ -183,8 +194,13 @@ const PlaygroundPage = {
             document.getElementById('rag-query').disabled = false;
             document.getElementById('rag-submit-btn').disabled = false;
 
+            console.log('Collections loaded successfully');
+
         } catch (error) {
             console.error('Error loading collections:', error);
+            const collectionSelect = document.getElementById('rag-collection');
+            collectionSelect.innerHTML = '<option value="">Error al cargar colecciones</option>';
+            collectionSelect.disabled = false;
         }
     },
 

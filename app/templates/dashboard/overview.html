@@ -24,6 +24,9 @@
             padding: var(--spacing-md);
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
         }
 
         .sidebar-logo {
@@ -35,6 +38,7 @@
             margin-bottom: var(--spacing-lg);
             padding-bottom: var(--spacing-md);
             border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
         }
 
         .sidebar-logo-icon {
@@ -50,6 +54,9 @@
 
         .sidebar-nav {
             flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: var(--spacing-md);
         }
 
         .sidebar-nav a {
@@ -72,6 +79,7 @@
         .sidebar-footer {
             padding-top: var(--spacing-md);
             border-top: 2px solid var(--border-color);
+            flex-shrink: 0;
         }
 
         .user-info {
@@ -314,7 +322,7 @@
             <!-- Quick Links -->
             <div class="quick-links"
                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
-                <a href="/api-docs" class="quick-link-card" style="text-decoration: none; color: inherit;">
+                <!-- <a href="/api-docs" class="quick-link-card" style="text-decoration: none; color: inherit;">
                     <div
                         style="background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 12px; padding: var(--spacing-md); transition: all 0.3s ease;">
                         <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
@@ -322,7 +330,7 @@
                         <p style="color: var(--text-secondary); font-size: 0.9rem;">Aprende a usar la API con ejemplos
                         </p>
                     </div>
-                </a>
+                </a> -->
                 <a href="/dashboard/projects/new" class="quick-link-card"
                     style="text-decoration: none; color: inherit;">
                     <div

@@ -1,9 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import logging
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.projects import router as projects_router
 from app.api.v1.collections import router as collection_router
@@ -27,25 +31,13 @@ import app.listeners.otp_persistence_listener  # NEW
 
 logger = logging.getLogger(__name__)
 
+# Configure rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="SonqoBase API",
     version="1.0.0",
-    description="""
-## Base de Datos Vectorial Efímera como Servicio
-
-SonqoBase proporciona una API REST para gestionar bases de datos vectoriales efímeras con embeddings automáticos y búsqueda semántica.
-
-### Características Principales
-- 🗄️ **Proyectos Multi-tenant**: Cada usuario puede crear múltiples proyectos aislados
-- 📄 **Ingesta Automática**: Sube PDFs y genera embeddings automáticamente
-- 🧠 **RAG Queries**: Consultas con Retrieval-Augmented Generation
-- ⏱️ **TTL Automático**: Los datos expiran automáticamente según el plan
-- 🔐 **Autenticación Dual**: User API Keys y Project API Keys
-
-### Autenticación
-- **User API Key**: Para gestionar proyectos (header: `X-User-Key`)
-- **Project API Key**: Para operaciones en colecciones (header: `X-API-Key`)
-    """,
+    description="API para gestionar bases de datos vectoriales efímeras con RAG.",
     docs_url="/docs",
     redoc_url="/redoc",
     contact={
@@ -62,6 +54,55 @@ SonqoBase proporciona una API REST para gestionar bases de datos vectoriales ef�
         "syntaxHighlight.theme": "monokai"  # Tema oscuro
     }
 )
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+from fastapi.openapi.utils import get_openapi
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Define Security Schemes
+    security_schemes = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter your JWT Access Token"
+        },
+        "UserKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-User-Key",
+            "description": "User API Key (sk_user_...)"
+        },
+        "ProjectKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "Project API Key (pk_proj_...)"
+        }
+    }
+    
+    if "components" not in openapi_schema:
+        openapi_schema["components"] = {}
+    
+    openapi_schema["components"]["securitySchemes"] = security_schemes
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 # Configurar CORS (Permitir todo para demo, restringir en prod estricto)
 app.add_middleware(

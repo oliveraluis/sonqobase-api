@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     otp_expire_seconds: int = 60  # 1 minute
     otp_length: int = 6
 
+    # Environment
+    environment: str = "production"  # development, production
+    mock_otp: bool = False  # If true, OTP is always 000000 and email is skipped
+
     class Config:
         env_file = ".env"
 

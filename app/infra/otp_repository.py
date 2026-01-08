@@ -213,3 +213,27 @@ class OTPRepository:
         if count > 0:
             logger.info(f"Invalidated {count} OTPs for user {user_id}")
         return count
+    
+    def count_recent_otps(self, user_id: str, hours: int = 1) -> int:
+        """
+        Count OTPs created for a user in the last N hours.
+        Used for rate limiting.
+        
+        Args:
+            user_id: User ID
+            hours: Number of hours to look back
+        
+        Returns:
+            Number of OTPs created in the time period
+        """
+        from datetime import timedelta
+        
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+        
+        count = self.collection.count_documents({
+            "user_id": user_id,
+            "created_at": {"$gte": cutoff_time}
+        })
+        
+        logger.debug(f"User {user_id} has {count} OTPs in last {hours} hour(s)")
+        return count

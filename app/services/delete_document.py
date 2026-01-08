@@ -9,12 +9,10 @@ from app.infra.mongo_client import get_mongo_client
 
 class DeleteDocumentService:
     """Servicio para eliminar documentos por ID"""
-    def __init__(self, api_key_repo: ApiKeyRepository):
-        self.api_key_repo = api_key_repo
-
+    
     def execute(
         self,
-        api_key: str,
+        project: "Project",
         collection: str,
         document_id: str,
     ) -> dict:
@@ -24,21 +22,12 @@ class DeleteDocumentService:
         except InvalidId:
             raise ValueError(f"Invalid document ID format: '{document_id}'. Must be a 24-character hex string.")
         
-        project = self.api_key_repo.get_project_by_key(api_key)
-
-        if not project:
-            raise ValueError("Invalid API Key")
-
-        # MongoDB devuelve datetimes naive, convertir a aware
-        expires_at = project["expires_at"]
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        db_name = project.database.name
+        # expires checking handled in dependency... but could check again? 
+        # Dependency check is sufficient.
         
-        if expires_at < datetime.now(timezone.utc):
-            raise RuntimeError("Project expired")
-
         client = get_mongo_client()
-        db = client[project["database"]]
+        db = client[db_name]
         col = db[collection]
 
         # Eliminar documento

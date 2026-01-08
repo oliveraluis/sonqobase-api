@@ -23,6 +23,9 @@
             padding: var(--spacing-md);
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
         }
 
         .sidebar-logo {
@@ -34,6 +37,7 @@
             margin-bottom: var(--spacing-lg);
             padding-bottom: var(--spacing-md);
             border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
         }
 
         .sidebar-logo-icon {
@@ -49,6 +53,9 @@
 
         .sidebar-nav {
             flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: var(--spacing-md);
         }
 
         .sidebar-nav a {
@@ -71,6 +78,7 @@
         .sidebar-footer {
             padding-top: var(--spacing-md);
             border-top: 2px solid var(--border-color);
+            flex-shrink: 0;
         }
 
         .user-info {
@@ -465,7 +473,7 @@
         </main>
     </div>
 
-    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/dashboard.js?v=no-cache"></script>
     <script>
         // Require authentication
         (async () => {

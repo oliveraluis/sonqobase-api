@@ -49,6 +49,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/api/v1/health",
             "/api/v1/plans",  # Planes públicos
+            "/api/v1/auth/login",  # Login endpoint (public)
             "/api/v1/auth/verify-otp", # Verify OTP must be public (it has own validations)
         ]
         

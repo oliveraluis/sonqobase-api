@@ -10,6 +10,7 @@ import logging
 from app.infra.plan_repository import PlanRepository
 from app.infra.lead_repository import LeadRepository
 from app.services.create_lead import CreateLeadService
+from app.config import settings
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -48,13 +49,13 @@ async def pricing_page(request: Request):
     )
 
 
-@router.get("/api-docs", response_class=HTMLResponse)
-async def api_documentation(request: Request):
-    """Documentación de la API"""
-    return templates.TemplateResponse(
-        "docs.html",
-        {"request": request}
-    )
+# @router.get("/api-docs", response_class=HTMLResponse)
+# async def api_documentation(request: Request):
+#     """Documentación de la API"""
+#     return templates.TemplateResponse(
+#         "docs.html",
+#         {"request": request}
+#     )
 
 @router.get("/docs-page", response_class=HTMLResponse)
 async def docs_page(request: Request):
@@ -70,7 +71,10 @@ async def dashboard_login(request: Request):
     """Dashboard login page"""
     return templates.TemplateResponse(
         "dashboard/login.html",
-        {"request": request}
+        {
+            "request": request,
+            "is_dev": settings.environment == "development"
+        }
     )
 
 
@@ -97,7 +101,10 @@ async def dashboard_overview(request: Request):
     """Dashboard overview page"""
     return templates.TemplateResponse(
         "dashboard/overview.html",
-        {"request": request}
+        {
+            "request": request,
+            "is_dev": settings.environment == "development"
+        }
     )
 
 
@@ -106,7 +113,10 @@ async def dashboard_projects(request: Request):
     """Dashboard projects list page"""
     return templates.TemplateResponse(
         "dashboard/projects.html",
-        {"request": request}
+        {
+            "request": request,
+            "is_dev": settings.environment == "development"
+        }
     )
 
 
@@ -124,7 +134,11 @@ async def dashboard_project_detail(request: Request, project_id: str):
     """Dashboard project detail page"""
     return templates.TemplateResponse(
         "dashboard/project_detail.html",
-        {"request": request, "project_id": project_id}
+        {
+            "request": request, 
+            "project_id": project_id,
+            "is_dev": settings.environment == "development"
+        }
     )
 
 
@@ -133,7 +147,12 @@ async def dashboard_project_playground(request: Request, project_id: str):
     """Dashboard RAG Playground page"""
     return templates.TemplateResponse(
         "dashboard/playground.html",
-        {"request": request, "project_id": project_id, "active_page": "playground"}
+        {
+            "request": request, 
+            "project_id": project_id, 
+            "active_page": "playground",
+            "is_dev": settings.environment == "development"
+        }
     )
 
 
@@ -142,7 +161,12 @@ async def dashboard_project_jobs(request: Request, project_id: str):
     """Dashboard Jobs Tracking page"""
     return templates.TemplateResponse(
         "dashboard/jobs.html",
-        {"request": request, "project_id": project_id, "active_page": "jobs"}
+        {
+            "request": request, 
+            "project_id": project_id, 
+            "active_page": "jobs",
+            "is_dev": settings.environment == "development"
+        }
     )
 
 

@@ -221,6 +221,7 @@ class OtpCreatedEvent(DomainEvent):
     otp_code: str
     otp_type: str = "login"
     user_name: Optional[str] = None
+    should_send_email: bool = True
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 # Deprecated: OtpRequestedEvent (Replaced by OtpCreatedEvent for full event driven flow)

@@ -23,6 +23,11 @@ async def on_otp_created_email(event: OtpCreatedEvent):
     """
     logger.info(f"📧 Processing OTP email for user {event.user_id}")
     
+    # Check bypass flag (for dev mode)
+    if not getattr(event, "should_send_email", True):
+        logger.info(f"🚫 Email sending skipped by configuration (MOCK OTP: {event.otp_code})")
+        return
+    
     email_service = get_email_service()
     loop = asyncio.get_running_loop()
     

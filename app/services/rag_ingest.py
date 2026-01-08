@@ -22,37 +22,26 @@ class RagIngestService:
     def __init__(
         self,
         embedding_provider: EmbeddingProvider,
-        api_key_repo: ApiKeyRepository,
     ):
         self.embedding_provider = embedding_provider
-        self.api_key_repo = api_key_repo
 
     async def execute(
         self,
-        api_key: str,
+        project: "Project",
         collection: str,
         text: str,
         chunk_size: int,
         document_id: str | None = None,
         metadata: dict | None = None
     ) -> dict:
-        project = self.api_key_repo.get_project_by_key(api_key)
-
-        if not project:
-            raise ValueError("Invalid API key")
-
-        # MongoDB devuelve datetimes naive, convertir a aware
-        expires_at = project["expires_at"]
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
         
-        if expires_at < datetime.now(timezone.utc):
-            raise RuntimeError("Project expired")
+        db_name = project.database.name
+        # expires checking handled in dependency...
 
         chunks = _chunk_text(text, chunk_size)
 
         client = get_mongo_client()
-        db = client[project["database"]]
+        db = client[db_name]
         vector_collection_name = f"{collection}__vectors"
         vector_collection = db[vector_collection_name]
 
@@ -74,7 +63,7 @@ class RagIngestService:
                     **(metadata or {}),
                 },
                 "created_at": datetime.now(timezone.utc),
-                "expires_at": project["expires_at"],
+                "expires_at": project.expires_at,
             }
             for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings))
         ]

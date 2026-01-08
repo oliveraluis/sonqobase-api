@@ -19,52 +19,59 @@
                     <span class="auth-logo-icon">🗄️</span>
                     <span class="auth-logo-text">SonqoBase</span>
                 </div>
-                <h1 class="auth-title">Welcome Back</h1>
-                <p class="auth-subtitle">Enter your User API Key to access your dashboard</p>
+                <h1 class="auth-title">Bienvenido de Nuevo</h1>
+                <p class="auth-subtitle">Ingresa tu User API Key para acceder a tu dashboard</p>
             </div>
 
             <form id="login-form">
                 <div class="form-group">
                     <label for="api-key" class="form-label">User API Key *</label>
-                    <input type="password" id="api-key" name="api-key" class="form-input" placeholder="sk_user_..."
-                        required autocomplete="off">
+                    <div style="position: relative;">
+                        <input type="password" id="api-key" name="api-key" class="form-input" placeholder="sk_user_..."
+                            required autocomplete="off" style="padding-right: 45px;">
+                        <button type="button" id="toggle-api-key"
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem; color: var(--text-secondary); padding: 5px;"
+                            title="Mostrar/Ocultar API Key">
+                            👁️
+                        </button>
+                    </div>
                     <span class="form-hint">
-                        ⚠️ Your API key was shown once when you created your account. Keep it safe!
+                        ⚠️ Tu API key se mostró una sola vez cuando creaste tu cuenta. ¡Guárdala bien!
                     </span>
                 </div>
 
                 <!-- OTP Section (Hidden initially) -->
                 <div id="otp-section" style="display: none;">
                     <div class="alert alert-success" style="margin-bottom: 20px;">
-                        📧 OTP sent to your email. Check your inbox!
+                        📧 Código enviado a tu email. ¡Revisa tu bandeja de entrada!
                     </div>
                     <div class="form-group">
-                        <label for="otp-code" class="form-label">Verification Code *</label>
+                        <label for="otp-code" class="form-label">Código de Verificación *</label>
                         <input type="text" id="otp-code" class="form-input otp-letter-input" placeholder="123456"
                             maxlength="6" pattern="\d{6}" autocomplete="one-time-code">
                         <span class="form-hint">
-                            Code expires in <span id="otp-timer">60</span> seconds.
+                            El código expira en <span id="otp-timer">60</span> segundos.
                         </span>
                     </div>
                 </div>
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary" id="login-btn">
-                        Get Verification Code
+                        Obtener Código de Verificación
                     </button>
                     <button type="button" class="btn btn-secondary" id="resend-btn"
                         style="display: none; margin-top: 10px; width: 100%">
-                        Resend Code
+                        Reenviar Código
                     </button>
                 </div>
             </form>
 
             <div class="auth-link">
-                Don't have an account? <a href="/dashboard/register">Register here</a>
+                ¿No tienes una cuenta? <a href="/dashboard/register">Regístrate aquí</a>
             </div>
 
             <div class="auth-link">
-                <a href="/">← Back to Home</a>
+                <a href="/">← Volver al Inicio</a>
             </div>
         </div>
     </div>
@@ -98,6 +105,14 @@
             await requestOTP();
         });
 
+        // Toggle API key visibility
+        const toggleBtn = document.getElementById('toggle-api-key');
+        toggleBtn.addEventListener('click', () => {
+            const type = apiKeyInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            apiKeyInput.setAttribute('type', type);
+            toggleBtn.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+
         async function requestOTP() {
             const apiKey = apiKeyInput.value.trim();
             if (!apiKey) {
@@ -108,10 +123,11 @@
             setLoading(loginBtn, true);
 
             try {
-                // Request OTP
-                // Use fetch directly to control error parsing
-                const response = await fetch('/api/v1/users/me', {
-                    headers: { 'X-User-Key': apiKey }
+                // Request OTP via login endpoint
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: apiKey })
                 });
 
                 if (response.ok) {

@@ -69,9 +69,17 @@ class ListProjectCollectionsService:
         
         logger.info(f"Retrieved {len(collections)} collections for project {project_id}")
         
-        return {
+        # Log collection names for debugging
+        collection_names = [c["name"] for c in collections]
+        logger.info(f"Collection names: {collection_names}")
+        
+        response_data = {
             "project_id": project_id,
             "database": project.database.name,
             "collections": collections,
             "total_collections": len(collections)
         }
+        
+        logger.info(f"Returning response: {response_data}")
+        
+        return response_data

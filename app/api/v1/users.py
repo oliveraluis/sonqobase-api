@@ -50,46 +50,43 @@ class AnalyticsResponse(BaseModel):
 
 
 # Endpoints
-@router.get("/me")
-async def request_otp(user: dict = Depends(require_user_key)):
+@router.get("/me", response_model=UserInfoResponse)
+async def get_current_user(user: dict = Depends(require_user_key)):
     """
-    Request OTP code for authentication.
-    Generates a 6-digit OTP and sends it to the user's email.
+    Get current authenticated user information.
     
     Requiere User API Key (X-User-Key header).
     
     Returns:
-        Message confirming OTP was sent
+        User information including email, plan, and status
     """
-    from app.services.generate_otp import GenerateOTPService
-    from app.infra.otp_repository import OTPRepository
     from app.infra.user_repository import UserRepository
     
     try:
-        service = GenerateOTPService(
-            otp_repo=OTPRepository(),
-            user_repo=UserRepository()
+        user_repo = UserRepository()
+        user_obj = user_repo.get_by_id(user["user_id"])
+        
+        if not user_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        return UserInfoResponse(
+            user_id=user_obj.id,
+            email=user_obj.email,
+            plan=user_obj.plan_name,
+            status=user_obj.status,
+            created_at=user_obj.created_at.isoformat()
         )
-        
-        result = await service.execute(user["user_id"])
-        
-        return {
-            "message": result["message"],
-            "email": result["email"],
-            "expires_in": result["expires_in"]
-        }
     
-    except ValueError as e:
-        logger.error(f"Failed to generate OTP: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Unexpected error generating OTP: {e}")
+        logger.error(f"Error fetching user info: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate OTP"
+            detail="Failed to fetch user information"
         )
 
 

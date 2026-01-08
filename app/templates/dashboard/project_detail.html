@@ -875,7 +875,9 @@
                             <p>Aún no hay colecciones. Crea una insertando documentos vía API.</p>
                         </div>
                     `;
-                    collectionSelect.innerHTML = '<option value="">No hay colecciones disponibles</option>';
+                    if (collectionSelect) {
+                        collectionSelect.innerHTML = '<option value="">No hay colecciones disponibles</option>';
+                    }
                     return;
                 }
 
@@ -890,29 +892,34 @@
                     </div>
                 `).join('');
 
-                // Filter RAG collections (only those ending with _vectors)
-                const ragCollections = data.collections.filter(coll => coll.name.endsWith('_vectors'));
+                // Only update RAG selector if it exists on this page
+                if (collectionSelect) {
+                    // Filter RAG collections (only those ending with _vectors)
+                    const ragCollections = data.collections.filter(coll => coll.name.endsWith('_vectors'));
 
-                if (ragCollections.length === 0) {
-                    collectionSelect.innerHTML = '<option value="">No hay colecciones RAG disponibles</option>';
-                    collectionSelect.disabled = true;
-                    document.getElementById('rag-query').disabled = true;
-                    return;
+                    if (ragCollections.length === 0) {
+                        collectionSelect.innerHTML = '<option value="">No hay colecciones RAG disponibles</option>';
+                        collectionSelect.disabled = true;
+                        const ragQuery = document.getElementById('rag-query');
+                        if (ragQuery) ragQuery.disabled = true;
+                        return;
+                    }
+
+                    // Update collection selector (only RAG collections)
+                    // IMPORTANT: Store the name WITHOUT _vectors because backend adds it automatically
+                    collectionSelect.innerHTML = '<option value="">Selecciona una colección RAG</option>' +
+                        ragCollections.map(coll => {
+                            // Remove _vectors suffix for both display AND value
+                            const baseName = coll.name.replace('_vectors', '');
+                            return `<option value="${baseName}">${baseName} (${coll.document_count} docs)</option>`;
+                        }).join('');
+
+                    // Enable RAG query form
+                    collectionSelect.disabled = false;
+                    const ragQuery = document.getElementById('rag-query');
+                    if (ragQuery) ragQuery.disabled = false;
+                    updateSubmitButton();
                 }
-
-                // Update collection selector (only RAG collections)
-                // IMPORTANT: Store the name WITHOUT _vectors because backend adds it automatically
-                collectionSelect.innerHTML = '<option value="">Selecciona una colección RAG</option>' +
-                    ragCollections.map(coll => {
-                        // Remove _vectors suffix for both display AND value
-                        const baseName = coll.name.replace('_vectors', '');
-                        return `<option value="${baseName}">${baseName} (${coll.document_count} docs)</option>`;
-                    }).join('');
-
-                // Enable RAG query form
-                collectionSelect.disabled = false;
-                document.getElementById('rag-query').disabled = false;
-                updateSubmitButton();
 
             } catch (error) {
                 console.error('Error loading collections:', error);

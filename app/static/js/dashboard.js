@@ -4,17 +4,19 @@
 // DEVICE DETECTION (Desktop Only)
 // ============================================
 
+/*
 (function () {
     const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isSmallScreen = window.innerWidth < 1024;
 
-    if (isMobileOrTablet || isSmallScreen) {
+    if (!window.IS_DEV && (isMobileOrTablet || isSmallScreen)) {
         // Redirect to desktop-only page
         if (!window.location.pathname.includes('/desktop-only')) {
             window.location.href = '/dashboard/desktop-only';
         }
     }
 })();
+*/
 
 // ============================================
 // LOCALSTORAGE MANAGEMENT
@@ -219,12 +221,24 @@ function redirectIfAuthenticated() {
 async function requireAuth() {
     if (!isAuthenticated()) {
         window.location.href = '/dashboard/login';
-        return false;
+        return null;
     }
 
-    // If we have a token, we assume it's valid (middleware checks it)
-    // If it expires, apiCall will redirect to login.
-    // For legacy API key, we might want to validate (but optimization suggests trusting localStorage until 401)
+    try {
+        // Fetch user data from the API
+        const response = await apiCall('/api/v1/users/me');
 
-    return true;
+        if (!response.ok) {
+            // If the request fails, redirect to login
+            logout();
+            return null;
+        }
+
+        const user = await response.json();
+        return user;
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        logout();
+        return null;
+    }
 }
