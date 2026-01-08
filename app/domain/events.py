@@ -224,4 +224,19 @@ class OtpCreatedEvent(DomainEvent):
     should_send_email: bool = True
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
+
+# Eventos de Contacto
+@dataclass(frozen=True)
+class ContactFormSubmittedEvent(DomainEvent):
+    """Evento cuando alguien envía el formulario de contacto en la landing page"""
+    name: str
+    email: str
+    phone: Optional[str]
+    country: Optional[str]
+    company: Optional[str]
+    interest: str
+    plan: str
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 # Deprecated: OtpRequestedEvent (Replaced by OtpCreatedEvent for full event driven flow)

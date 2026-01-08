@@ -122,6 +122,8 @@ contactForm.addEventListener('submit', async (e) => {
     const formData = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value || null,
+        country: document.getElementById('country').value || null,
         company: document.getElementById('company').value || null,
         interest: document.getElementById('interest').value,
         plan_interest: document.getElementById('plan').value,
