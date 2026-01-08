@@ -16,6 +16,8 @@ from app.infra.user_repository import UserRepository
 from app.infra.api_key_repository import ApiKeyRepository
 from app.domain.entities import User
 
+from app.utils.jwt import decode_token
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +30,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
     
     async def dispatch(self, request: Request, call_next):
-        logger.info(f"AuthMiddleware.dispatch called for path: {request.url.path}")
+        logger.debug(f"AuthMiddleware.dispatch called for path: {request.url.path}")
         
         # Rutas públicas (no requieren autenticación)
         public_paths = [
@@ -41,22 +43,34 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/dashboard",  # Dashboard overview (validación en frontend)
             "/dashboard/projects",  # Projects pages (validación en frontend)
             "/static",
+            "/sdk-js",
             "/docs",
             "/redoc",
             "/openapi.json",
             "/api/v1/health",
             "/api/v1/plans",  # Planes públicos
+            "/api/v1/auth/verify-otp", # Verify OTP must be public (it has own validations)
         ]
         
         # Manejar root path de forma especial
         if request.url.path == "/":
-            logger.info(f"Path {request.url.path} is root, skipping auth")
+            logger.debug(f"Path {request.url.path} is root, skipping auth")
             return await call_next(request)
         
         for path in public_paths:
             if request.url.path.startswith(path):
-                logger.info(f"Path {request.url.path} matches public path: {path}")
-                return await call_next(request)
+                # Special exceptions for specific paths that might need auth but have public prefix
+                if path == "/api/v1/auth/verify-otp" and request.url.path == "/api/v1/auth/verify-otp":
+                     # Verify OTP endpoint validation is handled in the endpoint itself (requires User Key)
+                     # But we must allow it to pass through this middleware if no auth headers are present?
+                     # Actually, verify-otp requires X-User-Key, so we should let it run through auth logic
+                     # IF the header is present. If not, maybe skip?
+                     # Let's simple remove verify-otp from public_paths and handle it via standard auth attempt
+                     # Wait, verify-otp needs headers validation.
+                     pass
+                else:
+                    logger.debug(f"Path {request.url.path} matches public path: {path}")
+                    return await call_next(request)
         
         # Crear repositorios por request (usan singleton de conexión)
         master_key_repo = MasterKeyRepository()
@@ -64,7 +78,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         project_key_repo = ApiKeyRepository()
         
         # Intentar autenticación en orden de prioridad
+        # 1. JWT (Bearer Token)
+        # 2. Master Key
+        # 3. User Key (Legacy/Initial Auth)
+        # 4. Project Key (API Access)
         auth_result = (
+            self._try_jwt_auth(request, user_repo) or
             self._try_master_key_auth(request, master_key_repo) or
             self._try_user_key_auth(request, user_repo) or
             self._try_project_key_auth(request, project_key_repo, user_repo)
@@ -79,9 +98,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if request.url.path.startswith("/api/v1/admin"):
                 return self._unauthorized_response("Master API Key required. Use header: X-Master-Key")
             
-            # Rutas de usuarios requieren User Key
+            # Rutas de autenticación
+            if request.url.path.startswith("/api/v1/auth"):
+                 # verify-otp might fails here if no X-User-Key provided
+                 return self._unauthorized_response("Authentication required")
+
+            # Rutas de usuarios requieren Auth
             if request.url.path.startswith("/api/v1/users"):
-                return self._unauthorized_response("User API Key required. Use header: X-User-Key")
+                return self._unauthorized_response("Authentication required (Bearer Token or X-User-Key)")
             
             # Rutas de proyectos requieren Project Key
             if request.url.path.startswith("/api/v1/projects") or \
@@ -100,6 +124,70 @@ class AuthMiddleware(BaseHTTPMiddleware):
             content={"detail": detail}
         )
     
+    def _forbidden_response(self, detail: str):
+        """Retornar respuesta de error 403"""
+        from starlette.responses import JSONResponse
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"detail": detail}
+        )
+    
+    def _not_found_response(self, detail: str):
+        """Retornar respuesta de error 404"""
+        from starlette.responses import JSONResponse
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"detail": detail}
+        )
+    
+    def _gone_response(self, detail: str):
+        """Retornar respuesta de error 410"""
+        from starlette.responses import JSONResponse
+        return JSONResponse(
+            status_code=status.HTTP_410_GONE,
+            content={"detail": detail}
+        )
+    
+    def _try_jwt_auth(self, request: Request, user_repo: UserRepository) -> bool:
+        """Intentar autenticación con JWT Bearer Token"""
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return False
+            
+        token = auth_header.split(" ")[1]
+        payload = decode_token(token)
+        
+        if not payload:
+            logger.warning("Invalid JWT token provided")
+            return False
+            
+        if payload.get("type") != "access":
+            logger.warning("JWT token is not an access token")
+            return False
+            
+        user_id = payload.get("sub")
+        if not user_id:
+            return False
+            
+        # Get user from DB to ensure it still exists and is active
+        # We could optimize this by trusting the token for X minutes, but DB check is safer
+        user = user_repo.get_by_id(user_id)
+        
+        if user:
+            if user.status != "active":
+                request.state.auth_error = self._forbidden_response(f"User account is {user.status}")
+                return False
+                
+            request.state.auth_level = "user" # JWT users are users
+            request.state.user = user
+            request.state.user_id = user.id
+            request.state.auth_method = "jwt"
+            logger.debug(f"Authenticated user via JWT: {user.id}")
+            return True
+            
+        logger.warning(f"User {user_id} from JWT not found in DB")
+        return False
+
     def _try_master_key_auth(
         self,
         request: Request,
@@ -127,16 +215,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
         """Intentar autenticación con User Key"""
         user_key = request.headers.get("X-User-Key")
         
-        logger.info(f"_try_user_key_auth called. Has X-User-Key: {bool(user_key)}")
+        # logger.info(f"_try_user_key_auth called. Has X-User-Key: {bool(user_key)}")
         
         if not user_key:
-            logger.info("No X-User-Key header found")
+            # logger.info("No X-User-Key header found")
             return False
         
-        logger.info(f"Looking for user with key: {user_key[:20]}...")
+        # logger.info(f"Looking for user with key: {user_key[:20]}...")
         user = user_repo.get_by_api_key(user_key)
         
-        logger.info(f"User found: {bool(user)}")
+        # logger.info(f"User found: {bool(user)}")
         
         if user:
             # Verificar que el usuario esté activo
@@ -149,6 +237,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             request.state.auth_level = "user"
             request.state.user = user
             request.state.user_id = user.id
+            request.state.auth_method = "api_key"
             logger.debug(f"Authenticated user: {user.id}")
             return True
         

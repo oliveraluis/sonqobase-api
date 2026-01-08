@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playground - Dashboard SonqoBase</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Dashboard Layout */
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--bg-card);
+            border-right: 2px solid var(--border-color);
+            padding: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo-icon {
+            font-size: 2rem;
+        }
+
+        .sidebar-logo-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 0.875rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .sidebar-footer {
+            padding-top: var(--spacing-md);
+            border-top: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .user-plan {
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: var(--spacing-lg);
+            background: var(--bg-primary);
+            overflow-y: auto;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: var(--spacing-md);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .page-header {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Sections */
+        .section {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-select,
+        .form-textarea,
+        .form-input {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            resize: vertical;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus,
+        .form-textarea:focus,
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+        }
+
+        .form-select:disabled,
+        .form-textarea:disabled,
+        .form-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-hint {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: var(--spacing-xl);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-zone.drag-over {
+            border-color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-top: var(--spacing-sm);
+        }
+
+        .file-info-icon {
+            font-size: 2rem;
+        }
+
+        .file-info-details {
+            flex: 1;
+            text-align: left;
+        }
+
+        .file-info-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .file-info-size {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: var(--bg-primary);
+            width: 100%;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-clear {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        /* Loading */
+        .rag-loading {
+            padding: var(--spacing-xl);
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto var(--spacing-md);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+        }
+
+        .loading-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .loading-steps {
+            margin: var(--spacing-md) 0;
+        }
+
+        .loading-step {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            opacity: 0.5;
+        }
+
+        .loading-step.active {
+            opacity: 1;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        .loading-hint {
+            font-size: 0.85rem;
+            margin-top: var(--spacing-sm);
+        }
+
+        /* Response */
+        .rag-response {
+            margin-top: var(--spacing-lg);
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .response-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .response-content {
+            padding: var(--spacing-lg);
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            line-height: 1.8;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .response-sources {
+            margin-top: var(--spacing-md);
+        }
+
+        .sources-title {
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .source-item {
+            padding: var(--spacing-md);
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .source-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .source-meta {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-family: 'Monaco', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="sidebar-logo-icon">🗄️</span>
+                <span class="sidebar-logo-text">SonqoBase</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard">📊 Resumen</a>
+                <a href="/dashboard/projects">🗂️ Proyectos</a>
+                <a href="/dashboard/projects/{{ project_id }}/playground" class="active">🧪 Playground</a>
+                <a href="/dashboard/projects/{{ project_id }}/jobs">📋 Jobs</a>
+                <a href="/dashboard/settings">⚙️ Configuración</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info" id="user-info">
+                    <div class="user-email" id="user-email">Loading...</div>
+                    <div class="user-plan" id="user-plan">...</div>
+                </div>
+                <button class="btn-logout" onclick="logout()">🚪 Cerrar sesión</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="/dashboard">Dashboard</a>
+                <span>›</span>
+                <a href="/dashboard/projects">Proyectos</a>
+                <span>›</span>
+                <span>{{ project_id }}</span>
+                <span>›</span>
+                <span>Playground</span>
+            </div>
+
+            <div class="page-header">
+                <h1 class="page-title">🧪 RAG Laboratory</h1>
+                <p class="page-subtitle">Prueba tu base de datos vectorial en tiempo real</p>
+            </div>
+
+            <!-- Upload PDF Section -->
+            <div class="section">
+                <h2 class="section-title">📄 1. Ingesta de Documentos</h2>
+                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                    Sube un PDF para indexarlo automáticamente con embeddings.
+                </p>
+
+                <div class="form-group">
+                    <label class="form-label">Colección de destino</label>
+                    <input type="text" id="upload-collection" class="form-input" value="playground-demo"
+                        placeholder="Nombre de la colección">
+                    <div class="form-hint">Si no existe, se creará automáticamente</div>
+                </div>
+
+                <div class="upload-zone" id="upload-zone">
+                    <input type="file" id="file-input" accept="application/pdf" style="display: none;">
+                    <div id="upload-prompt">
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-sm);">📄</div>
+                        <p style="font-weight: 600; margin-bottom: 0.5rem;">Arrastra un PDF aquí o haz click para
+                            seleccionar</p>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Máximo 10MB</p>
+                    </div>
+                    <div id="file-selected" style="display: none;"></div>
+                </div>
+
+                <button id="upload-btn" class="btn btn-primary" style="display: none;" onclick="uploadPdf()">
+                    📤 Subir e Indexar
+                </button>
+
+                <div id="upload-status" style="display: none;"></div>
+            </div>
+
+            <!-- RAG Query Section -->
+            <div class="section">
+                <h2 class="section-title">🤖 2. Consulta RAG (Inteligencia Artificial)</h2>
+                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                    Haz preguntas sobre tus documentos y obtén respuestas generadas por IA.
+                </p>
+
+                <!-- Collection Selector -->
+                <div class="form-group">
+                    <label class="form-label" for="rag-collection">Selecciona una colección RAG</label>
+                    <select id="rag-collection" class="form-select" disabled>
+                        <option value="">Cargando colecciones...</option>
+                    </select>
+                    <div class="form-hint">Solo se muestran colecciones con vectores de embeddings</div>
+                </div>
+
+                <!-- Query Input -->
+                <div class="form-group">
+                    <label class="form-label" for="rag-query">Tu pregunta</label>
+                    <textarea id="rag-query" class="form-textarea"
+                        placeholder="ej: ¿Cuáles son los puntos clave del documento?" rows="3" disabled></textarea>
+                    <div class="form-hint">La IA buscará en tus documentos para responder</div>
+                </div>
+
+                <!-- Submit Button -->
+                <button id="rag-submit-btn" class="btn btn-primary" onclick="submitRagQuery()" disabled
+                    style="margin-bottom: var(--spacing-md);">
+                    🚀 Consultar IA
+                </button>
+
+                <!-- Loading State -->
+                <div id="rag-loading" class="rag-loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">
+                        <div class="loading-title">Procesando tu consulta...</div>
+                        <div class="loading-steps" id="loading-steps">
+                            <div class="loading-step active">🔍 Analizando tu pregunta</div>
+                            <div class="loading-step">📚 Buscando en tus documentos</div>
+                            <div class="loading-step">🤖 Generando respuesta con IA</div>
+                        </div>
+                        <div class="loading-hint">Esto puede tomar 10-15 segundos</div>
+                    </div>
+                </div>
+
+                <!-- Response Container -->
+                <div id="rag-response" class="rag-response" style="display: none;">
+                    <div class="response-header">
+                        <h3>💡 Respuesta</h3>
+                        <button class="btn-clear" onclick="clearRagResponse()">✕ Limpiar</button>
+                    </div>
+                    <div class="response-content" id="response-content"></div>
+                    <div class="response-sources" id="response-sources-container">
+                        <!-- Sources will be loaded here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/pages/playground.js"></script>
+    <script>
+        const projectId = "{{ project_id }}";
+
+        // Require authentication
+        (async () => {
+            const user = await requireAuth();
+            if (!user) return;
+
+            // Load user info
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('user-plan').textContent = user.plan;
+
+            // Initialize playground
+            await PlaygroundPage.init(projectId);
+        })();
+    </script>
+</body>
+
+</html>

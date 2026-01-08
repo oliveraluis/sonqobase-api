@@ -21,6 +21,8 @@
 // ============================================
 
 const AUTH_KEY = 'sonqobase_user_key';
+const TOKEN_KEY = 'access_token';
+const REFRESH_KEY = 'refresh_token';
 
 function saveApiKey(apiKey) {
     localStorage.setItem(AUTH_KEY, apiKey);
@@ -30,12 +32,18 @@ function getApiKey() {
     return localStorage.getItem(AUTH_KEY);
 }
 
-function clearApiKey() {
+function getAccessToken() {
+    return localStorage.getItem(TOKEN_KEY);
+}
+
+function clearTokens() {
     localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
 }
 
 function isAuthenticated() {
-    return !!getApiKey();
+    return !!getAccessToken() || !!getApiKey();
 }
 
 // ============================================
@@ -43,9 +51,13 @@ function isAuthenticated() {
 // ============================================
 
 async function apiCall(url, options = {}) {
+    const token = getAccessToken();
     const apiKey = getApiKey();
+    const skipAuth = options.skipAuth || false;
+    // Flag to prevent infinite loops if refresh fails
+    const isRetry = options.isRetry || false;
 
-    if (!apiKey && !options.skipAuth) {
+    if (!token && !apiKey && !skipAuth) {
         window.location.href = '/dashboard/login';
         throw new Error('No autenticado');
     }
@@ -55,7 +67,11 @@ async function apiCall(url, options = {}) {
         ...options.headers,
     };
 
-    if (apiKey && !options.skipAuth) {
+    // Prefer JWT Token
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    } else if (apiKey && options.useApiKey) {
+        // Only send API Key if explicitly requested (e.g. for initial user validation)
         headers['X-User-Key'] = apiKey;
     }
 
@@ -64,11 +80,52 @@ async function apiCall(url, options = {}) {
         headers,
     });
 
-    // Si es 401 o 403, redirigir a login
-    if (response.status === 401 || response.status === 403) {
-        clearApiKey();
-        window.location.href = '/dashboard/login';
-        throw new Error('Autenticación fallida');
+    // Handle 401 Unauthorized (Token Expired?)
+    if (response.status === 401 && !isRetry && !skipAuth) {
+        const refreshToken = localStorage.getItem(REFRESH_KEY);
+
+        if (refreshToken) {
+            try {
+                // Attempt to refresh
+                console.log('🔄 Token expired, attempting refresh...');
+                const refreshResponse = await fetch('/api/v1/auth/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: refreshToken })
+                });
+
+                if (refreshResponse.ok) {
+                    const data = await refreshResponse.json();
+
+                    // Save new access token
+                    localStorage.setItem(TOKEN_KEY, data.access_token);
+                    console.log('✅ Token refreshed successfully');
+
+                    // Retry original request with new token
+                    // We need to pass isRetry=true to avoid infinite loop if it fails again
+                    return await apiCall(url, { ...options, isRetry: true });
+                } else {
+                    console.warn('❌ Refresh token invalid or expired');
+                    // Refresh failed, clear everything and logout
+                    logout();
+                    throw new Error('Sesión expirada');
+                }
+            } catch (err) {
+                console.error('Refresh attempt failed:', err);
+                logout();
+                throw err;
+            }
+        } else {
+            // No refresh token available
+            logout(); // Or clearTokens()
+            throw new Error('No autenticado');
+        }
+    }
+
+    // Si es 403 Forbidden (Auth válida pero sin permisos)
+    if (response.status === 403) {
+        // Podríamos mostrar un alert sin redirigir, o redirigir según caso
+        throw new Error('Acceso denegado');
     }
 
     return response;
@@ -76,6 +133,10 @@ async function apiCall(url, options = {}) {
 
 async function validateApiKey(apiKey) {
     try {
+        // This endpoint generates OTP now, but we use it here just to validate key existence
+        // For validation purposes only in legacy flow
+        // Actually, we should probably check if key format is correct or try a lighter endpoint
+        // But users/me is fine for now
         const response = await fetch('/api/v1/users/me', {
             headers: {
                 'X-User-Key': apiKey,
@@ -137,7 +198,7 @@ async function copyToClipboard(text) {
 // ============================================
 
 function logout() {
-    clearApiKey();
+    clearTokens();
     window.location.href = '/dashboard/login';
 }
 
@@ -161,15 +222,9 @@ async function requireAuth() {
         return false;
     }
 
-    // Validate API key
-    const apiKey = getApiKey();
-    const user = await validateApiKey(apiKey);
+    // If we have a token, we assume it's valid (middleware checks it)
+    // If it expires, apiCall will redirect to login.
+    // For legacy API key, we might want to validate (but optimization suggests trusting localStorage until 401)
 
-    if (!user) {
-        clearApiKey();
-        window.location.href = '/dashboard/login';
-        return false;
-    }
-
-    return user;
+    return true;
 }

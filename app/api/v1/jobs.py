@@ -7,6 +7,7 @@ from typing import Optional
 
 from app.services.get_job_status import GetJobStatusService
 from app.services.list_user_jobs import ListUserJobsService
+from app.services.list_project_jobs import ListProjectJobsService
 from app.infra.job_repository import JobRepository
 from app.dependencies.auth import require_user_or_project_key
 
@@ -21,6 +22,10 @@ def get_job_status_service() -> GetJobStatusService:
 
 def get_list_user_jobs_service() -> ListUserJobsService:
     return ListUserJobsService(job_repo=JobRepository())
+
+
+def get_list_project_jobs_service() -> ListProjectJobsService:
+    return ListProjectJobsService(job_repo=JobRepository())
 
 
 # Endpoints
@@ -92,4 +97,3 @@ async def list_user_jobs(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-

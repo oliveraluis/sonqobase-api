@@ -5,9 +5,11 @@ from app.models.responses import ProjectResponse
 from app.services.create_project import CreateProjectService
 from app.services.list_user_projects import ListUserProjectsService
 from app.services.get_project_details import GetProjectDetailsService
+from app.services.list_project_jobs import ListProjectJobsService
 from app.infra.project_repository import ProjectRepository
 from app.infra.user_repository import UserRepository
 from app.infra.plan_repository import PlanRepository
+from app.infra.job_repository import JobRepository
 from app.dependencies.auth import require_user_key
 
 router = APIRouter()
@@ -25,6 +27,9 @@ def get_list_projects_service() -> ListUserProjectsService:
 def get_project_details_service() -> GetProjectDetailsService:
     repo = ProjectRepository()
     return GetProjectDetailsService(repo)
+
+def get_list_project_jobs_service() -> ListProjectJobsService:
+    return ListProjectJobsService(job_repo=JobRepository())
 
 
 @router.get("", response_model=List[dict])
@@ -149,6 +154,41 @@ async def create_project(
         return await service.execute(payload, user_id)
     except ValueError as e:
         # Límite excedido o usuario no encontrado
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.get("/{project_id}/jobs")
+async def list_project_jobs(
+    project_id: str,
+    limit: int = 50,
+    status_filter: str = None,
+    user: dict = Depends(require_user_key),
+    service: ListProjectJobsService = Depends(get_list_project_jobs_service),
+):
+    """
+    Listar jobs de un proyecto específico.
+    
+    Query params:
+    - limit: Número máximo de jobs (default: 50, max: 100)
+    - status_filter: Filtrar por estado (pending, processing, completed, failed)
+    
+    Requiere User API Key.
+    """
+    user_id = user["user_id"]
+    
+    try:
+        result = service.execute(
+            project_id=project_id,
+            user_id=user_id,
+            limit=limit,
+            status_filter=status_filter
+        )
+        return result
+    
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)

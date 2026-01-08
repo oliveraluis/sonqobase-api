@@ -127,34 +127,43 @@ RESPUESTA:"""
             response_time_ms=response_time_ms,
         ))
 
-        # Audit log: guardar la consulta RAG
+        # Audit log: guardar la consulta RAG en historial (2 días de retención)
         try:
-            audit_collection = db["_rag_queries_audit"]
+            queries_history = db["queries_history"]
             
             # Crear índices si no existen (solo se ejecuta una vez)
             try:
-                audit_collection.create_index("project_id")
-                audit_collection.create_index("timestamp")
-                audit_collection.create_index([("project_id", 1), ("timestamp", -1)])
+                queries_history.create_index("project_id")
+                queries_history.create_index("timestamp")
+                queries_history.create_index([("project_id", 1), ("timestamp", -1)])
+                # TTL index: eliminar automáticamente después de 2 días
+                queries_history.create_index("timestamp", expireAfterSeconds=172800)  # 2 días = 172800 segundos
             except Exception:
                 # Índices ya existen, ignorar
                 pass
             
-            audit_collection.insert_one({
+            queries_history.insert_one({
                 "project_id": project["project_id"],
                 "collection": collection,
                 "query": query,
                 "answer": answer,
                 "sources_count": len(results),
                 "timestamp": datetime.now(timezone.utc),
-                "top_k": top_k,
                 "response_time_ms": response_time_ms,
             })
         except Exception as e:
-            # No fallar si el audit falla, solo loguear
-            print(f"Warning: Failed to audit RAG query: {e}")
-
-        return {
-            "answer": answer,
-            "sources": results,
-        }
+            # No fallar si el audit log falla
+            logger.warning(f"Failed to save query history: {e}")
+        
+        return RagQueryResponse(
+            answer=answer,
+            sources=[
+                RagSource(
+                    text=r["text"],
+                    score=r["score"],
+                    document_id=r["document_id"],
+                    metadata=r.get("metadata", {})
+                )
+                for r in results
+            ]
+        )

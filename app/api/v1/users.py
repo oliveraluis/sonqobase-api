@@ -48,20 +48,49 @@ class AnalyticsResponse(BaseModel):
     projects: ProjectSummary
 
 
+
 # Endpoints
-@router.get("/me", response_model=UserInfoResponse)
-async def get_user_info(user: dict = Depends(require_user_key)):
+@router.get("/me")
+async def request_otp(user: dict = Depends(require_user_key)):
     """
-    Obtener información del usuario autenticado.
-    Requiere User API Key.
+    Request OTP code for authentication.
+    Generates a 6-digit OTP and sends it to the user's email.
+    
+    Requiere User API Key (X-User-Key header).
+    
+    Returns:
+        Message confirming OTP was sent
     """
-    return UserInfoResponse(
-        user_id=user["user_id"],
-        email=user["email"],
-        plan=user["plan"],
-        status=user["status"],
-        created_at=user["created_at"],
-    )
+    from app.services.generate_otp import GenerateOTPService
+    from app.infra.otp_repository import OTPRepository
+    from app.infra.user_repository import UserRepository
+    
+    try:
+        service = GenerateOTPService(
+            otp_repo=OTPRepository(),
+            user_repo=UserRepository()
+        )
+        
+        result = await service.execute(user["user_id"])
+        
+        return {
+            "message": result["message"],
+            "email": result["email"],
+            "expires_in": result["expires_in"]
+        }
+    
+    except ValueError as e:
+        logger.error(f"Failed to generate OTP: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error generating OTP: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate OTP"
+        )
 
 
 @router.get("/debug/auth")

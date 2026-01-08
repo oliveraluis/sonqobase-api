@@ -59,6 +59,16 @@ class UserRepository:
             return None
         
         return self._to_entity(doc)
+
+    def get_user_by_id(self, user_id: str) -> Optional[dict]:
+        """
+        Obtener usuario como diccionario por ID.
+        Usado por servicios que esperan un dict en lugar de entidad.
+        """
+        client = get_mongo_client()
+        meta_db = client[settings.mongo_meta_db]
+        
+        return meta_db.users.find_one({"user_id": user_id}, {"_id": 0})
     
     def get_by_api_key(self, api_key: str) -> Optional[User]:
         """Obtener usuario por API key (comparando hash)"""

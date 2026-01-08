@@ -128,6 +128,24 @@ async def dashboard_project_detail(request: Request, project_id: str):
     )
 
 
+@router.get("/dashboard/projects/{project_id}/playground", response_class=HTMLResponse)
+async def dashboard_project_playground(request: Request, project_id: str):
+    """Dashboard RAG Playground page"""
+    return templates.TemplateResponse(
+        "dashboard/playground.html",
+        {"request": request, "project_id": project_id, "active_page": "playground"}
+    )
+
+
+@router.get("/dashboard/projects/{project_id}/jobs", response_class=HTMLResponse)
+async def dashboard_project_jobs(request: Request, project_id: str):
+    """Dashboard Jobs Tracking page"""
+    return templates.TemplateResponse(
+        "dashboard/jobs.html",
+        {"request": request, "project_id": project_id, "active_page": "jobs"}
+    )
+
+
 @router.get("/pricing-data")
 async def get_pricing_data():
     """

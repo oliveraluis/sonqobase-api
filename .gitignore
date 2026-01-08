@@ -61,3 +61,5 @@ dist/
 # Scripts (desarrollo local)
 # ===============================
 app/scripts/
+
+sdk-js/node_modules/

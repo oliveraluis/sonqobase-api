@@ -209,3 +209,18 @@ class UsageLimitWarningEvent(DomainEvent):
     limit: int
     percentage: float
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+# Eventos de Autenticación
+@dataclass(frozen=True)
+class OtpCreatedEvent(DomainEvent):
+    """Event when OTP is generated (in-memory) and ready to be processed"""
+    otp_id: str
+    user_id: str
+    email: str
+    otp_code: str
+    otp_type: str = "login"
+    user_name: Optional[str] = None
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Deprecated: OtpRequestedEvent (Replaced by OtpCreatedEvent for full event driven flow)

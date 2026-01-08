@@ -1,19 +1,29 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 import logging
 
 from app.api.v1.projects import router as projects_router
 from app.api.v1.collections import router as collection_router
 from app.api.v1.admin import router as admin_router
 from app.api.v1.users import router as users_router
+from app.api.v1.auth import router as auth_router
 from app.api.v1.plans import router as plans_router
 from app.api.v1.jobs import router as jobs_router
 from app.api.web import router as web_router
 from app.middleware.auth import AuthMiddleware
+from app.middleware.error_handler import (
+    global_exception_handler,
+    http_exception_handler,
+    validation_exception_handler
+)
 from app.infra.event_bus import get_event_bus
 
 # Importar listeners para auto-registro
 import app.listeners
+import app.listeners.otp_persistence_listener  # NEW
 
 logger = logging.getLogger(__name__)
 
@@ -23,24 +33,18 @@ app = FastAPI(
     description="""
 ## Base de Datos Vectorial Efímera como Servicio
 
-SonqoBase te permite almacenar documentos, generar embeddings automáticamente y hacer consultas con IA (RAG) en minutos.
+SonqoBase proporciona una API REST para gestionar bases de datos vectoriales efímeras con embeddings automáticos y búsqueda semántica.
 
-### 🚀 Características
+### Características Principales
+- 🗄️ **Proyectos Multi-tenant**: Cada usuario puede crear múltiples proyectos aislados
+- 📄 **Ingesta Automática**: Sube PDFs y genera embeddings automáticamente
+- 🧠 **RAG Queries**: Consultas con Retrieval-Augmented Generation
+- ⏱️ **TTL Automático**: Los datos expiran automáticamente según el plan
+- 🔐 **Autenticación Dual**: User API Keys y Project API Keys
 
-- **Almacenamiento de Documentos**: Guarda y consulta documentos JSON
-- **Ingesta de PDFs**: Sube PDFs y conviértelos en bases de conocimiento
-- **Consultas RAG**: Haz preguntas en lenguaje natural sobre tus documentos
-- **Embeddings Automáticos**: Generación automática de vectores con IA
-- **Búsqueda Semántica**: Encuentra documentos por similitud, no solo palabras clave
-
-### 📚 Documentación Completa
-
-Visita [/api-docs](/api-docs) para ver la documentación completa con ejemplos.
-
-### 🔐 Autenticación
-
-Todas las peticiones requieren una API Key en el header `X-API-Key`.
-Obtén tu API Key en el [Dashboard](/dashboard).
+### Autenticación
+- **User API Key**: Para gestionar proyectos (header: `X-User-Key`)
+- **Project API Key**: Para operaciones en colecciones (header: `X-API-Key`)
     """,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -51,10 +55,32 @@ Obtén tu API Key en el [Dashboard](/dashboard).
     license_info={
         "name": "Proprietary",
     },
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": -1,  # Ocultar modelos por defecto
+        "docExpansion": "list",  # Expandir solo tags
+        "filter": True,  # Habilitar búsqueda
+        "syntaxHighlight.theme": "monokai"  # Tema oscuro
+    }
 )
+
+# Configurar CORS (Permitir todo para demo, restringir en prod estricto)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permitir localhost:8080 y otros
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Registrar Manejadores de Excepciones Globales
+app.add_exception_handler(Exception, global_exception_handler)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 # Montar archivos estáticos
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# app.mount("/examples", StaticFiles(directory="examples"), name="examples")  # Removed - not needed with new architecture
+app.mount("/sdk-js", StaticFiles(directory="sdk-js"), name="sdk-js")
 
 # Middleware de autenticación
 app.add_middleware(AuthMiddleware)
@@ -78,6 +104,13 @@ app.include_router(
     users_router,
     prefix="/api/v1/users",
     tags=["Users"],
+)
+
+# Routers de Autenticación (OTP, Refresh)
+app.include_router(
+    auth_router,
+    prefix="/api/v1/auth",
+    tags=["Auth"],
 )
 
 # Routers de Planes (públicos)

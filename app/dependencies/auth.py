@@ -37,28 +37,32 @@ async def require_master_key(
 
 async def require_user_key(
     request: Request,
-    x_user_key: Annotated[str, Header(description="User API Key para operaciones de usuario")]
+    x_user_key: Annotated[Optional[str], Header(description="User API Key (Optional if Bearer Token used)")] = None
 ) -> dict:
     """
-    Dependency que requiere User API Key.
+    Dependency que requiere autenticación de usuario (User API Key O JWT Bearer Token).
     
     Args:
         request: Request de FastAPI
-        x_user_key: Header X-User-Key
+        x_user_key: Header X-User-Key (Opcional si se usa Authorization header)
     
     Returns:
         Diccionario con información del usuario autenticado
     
     Raises:
-        HTTPException: Si no está autenticado con User Key
+        HTTPException: Si no está autenticado como usuario
     """
     # Debug logging
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"require_user_key called")
-    logger.info(f"Has auth_level: {hasattr(request.state, 'auth_level')}")
-    logger.info(f"Auth level: {getattr(request.state, 'auth_level', 'NOT SET')}")
-    logger.info(f"Has user: {hasattr(request.state, 'user')}")
+    # import logging
+    # logger = logging.getLogger(__name__)
+    # logger.debug(f"require_user_key called. Auth level: {getattr(request.state, 'auth_level', 'None')}")
+    
+    # El middleware ya validó la autenticación (sea por Key o JWT)
+    if not hasattr(request.state, 'auth_level') or request.state.auth_level != "user":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Authentication required (User API Key or Bearer Token)"
+        )
     
     # El middleware ya validó el header, solo verificamos el nivel
     if not hasattr(request.state, 'auth_level') or request.state.auth_level != "user":

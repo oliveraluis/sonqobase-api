@@ -77,13 +77,13 @@ class EventBus:
             except Exception as e:
                 logger.error(f"❌ Error in sync listener for {event_type.__name__}: {e}")
         
-        # Ejecutar listeners asíncronos en paralelo
-        async_tasks = []
+        # Ejecutar listeners asíncronos en paralelo (Fire-and-forget)
+        # No esperamos a que terminen para no bloquear el flujo principal (ej. respuesta HTTP)
         for listener in self._async_listeners.get(event_type, []):
-            async_tasks.append(self._safe_async_call(listener, event))
-        
-        if async_tasks:
-            await asyncio.gather(*async_tasks, return_exceptions=True)
+            asyncio.create_task(self._safe_async_call(listener, event))
+            
+        # NOTA: Al usar create_task, si hay errores no manejados en _safe_async_call,
+        # solo se loguearán pero no se propagarán al caller. Esto es deseado para eventos.
     
     async def _safe_async_call(self, listener: Callable, event: DomainEvent):
         """Ejecutar listener con manejo de errores"""

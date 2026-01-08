@@ -33,9 +33,30 @@
                     </span>
                 </div>
 
-                <button type="submit" class="btn btn-primary" id="login-btn">
-                    Login to Dashboard
-                </button>
+                <!-- OTP Section (Hidden initially) -->
+                <div id="otp-section" style="display: none;">
+                    <div class="alert alert-success" style="margin-bottom: 20px;">
+                        📧 OTP sent to your email. Check your inbox!
+                    </div>
+                    <div class="form-group">
+                        <label for="otp-code" class="form-label">Verification Code *</label>
+                        <input type="text" id="otp-code" class="form-input otp-letter-input" placeholder="123456"
+                            maxlength="6" pattern="\d{6}" autocomplete="one-time-code">
+                        <span class="form-hint">
+                            Code expires in <span id="otp-timer">60</span> seconds.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="login-btn">
+                        Get Verification Code
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="resend-btn"
+                        style="display: none; margin-top: 10px; width: 100%">
+                        Resend Code
+                    </button>
+                </div>
             </form>
 
             <div class="auth-link">
@@ -50,16 +71,35 @@
 
     <script src="/static/js/dashboard.js"></script>
     <script>
-        // Redirect if already authenticated
-        redirectIfAuthenticated();
+        // Redirect if already authenticated - DISABLED to allow re-login / fix loops
+        // redirectIfAuthenticated();
 
-        // Handle login form
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        let currentStep = 1;
+        let timerInterval;
+
+        const loginForm = document.getElementById('login-form');
+        const loginBtn = document.getElementById('login-btn');
+        const resendBtn = document.getElementById('resend-btn');
+        const apiKeyInput = document.getElementById('api-key');
+        const otpSection = document.getElementById('otp-section');
+        const otpInput = document.getElementById('otp-code');
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const apiKey = document.getElementById('api-key').value.trim();
-            const loginBtn = document.getElementById('login-btn');
+            if (currentStep === 1) {
+                await requestOTP();
+            } else {
+                await verifyOTP();
+            }
+        });
 
+        resendBtn.addEventListener('click', async () => {
+            await requestOTP();
+        });
+
+        async function requestOTP() {
+            const apiKey = apiKeyInput.value.trim();
             if (!apiKey) {
                 showAlert('Please enter your API key', 'error');
                 return;
@@ -68,29 +108,106 @@
             setLoading(loginBtn, true);
 
             try {
-                // Validate API key
-                const user = await validateApiKey(apiKey);
+                // Request OTP
+                // Use fetch directly to control error parsing
+                const response = await fetch('/api/v1/users/me', {
+                    headers: { 'X-User-Key': apiKey }
+                });
 
-                if (user) {
-                    // Save to localStorage
-                    saveApiKey(apiKey);
+                if (response.ok) {
+                    const data = await response.json();
 
-                    // Show success and redirect
+                    // Switch to Step 2
+                    currentStep = 2;
+                    otpSection.style.display = 'block';
+                    apiKeyInput.disabled = true; // Lock API Key
+                    loginBtn.textContent = 'Verify & Login';
+                    resendBtn.style.display = 'block';
+                    otpInput.focus();
+
+                    startTimer(data.expires_in || 60);
+                    showAlert('Code sent! Please check your email.', 'success');
+                } else {
+                    // Handle Errors (including Rate Limit)
+                    const error = await response.json();
+                    let msg = error.detail || 'Invalid API Key';
+
+                    // Check for nested error object (e.g. from Rate Limiter or standardized error)
+                    if (error.error && error.error.message) {
+                        msg = error.error.message;
+                    }
+
+                    showAlert(msg, 'error');
+                }
+            } catch (error) {
+                console.error('Request OTP error:', error);
+                showAlert('Network error. Please try again.', 'error');
+            } finally {
+                setLoading(loginBtn, false);
+            }
+        }
+
+        async function verifyOTP() {
+            const apiKey = apiKeyInput.value.trim();
+            const code = otpInput.value.trim();
+
+            if (code.length !== 6) {
+                showAlert('Please enter the 6-digit code', 'error');
+                return;
+            }
+
+            setLoading(loginBtn, true);
+
+            try {
+                const response = await fetch('/api/v1/auth/verify-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Key': apiKey
+                    },
+                    body: JSON.stringify({ code })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Save Tokens
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('refresh_token', data.refresh_token);
+
                     showAlert('Login successful! Redirecting...', 'success');
 
                     setTimeout(() => {
                         window.location.href = '/dashboard';
-                    }, 1000);
+                    }, 500);
                 } else {
-                    showAlert('Invalid API key. Please check and try again.', 'error');
-                    setLoading(loginBtn, false);
+                    const error = await response.json();
+                    showAlert(error.detail || 'Invalid Code', 'error');
                 }
             } catch (error) {
-                console.error('Login error:', error);
-                showAlert('An error occurred. Please try again.', 'error');
+                console.error('Verification error:', error);
+                showAlert('Verification failed. Try again.', 'error');
+            } finally {
                 setLoading(loginBtn, false);
             }
-        });
+        }
+
+        function startTimer(duration) {
+            let timer = duration;
+            const display = document.getElementById('otp-timer');
+
+            if (timerInterval) clearInterval(timerInterval);
+            display.textContent = timer;
+
+            timerInterval = setInterval(() => {
+                timer--;
+                display.textContent = timer;
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    showAlert('Code expired. Please request a new one.', 'warning');
+                }
+            }, 1000);
+        }
     </script>
 </body>
 

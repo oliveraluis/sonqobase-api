@@ -238,36 +238,37 @@
             <h2>🚀 Inicio Rápido</h2>
             <p>SonqoBase te permite almacenar y consultar documentos usando IA en minutos.</p>
 
+            <div class="alert alert-info">
+                <strong>📦 SDK Oficial:</strong> Recomendamos usar nuestro SDK de JavaScript para la mejor experiencia.
+                <br>
+                <code>npm install sonqobase</code>
+            </div>
+
             <h3>1. Obtén tu API Key</h3>
-            <p>Regístrate en el <a href="/dashboard/register">Dashboard</a> y crea un proyecto. Recibirás dos tipos de
-                claves:</p>
-            <ul>
-                <li><strong>User API Key</strong>: Para gestionar proyectos (empieza con <code>sonqo_user_</code>)</li>
-                <li><strong>Project API Key</strong>: Para acceder a colecciones (empieza con <code>sonqo_proj_</code>)
-                </li>
-            </ul>
+            <p>Regístrate en el <a href="/dashboard/register">Dashboard</a> y crea un proyecto.</p>
 
-            <h3>2. Inserta Documentos</h3>
-            <div class="code-block"><code>curl -X POST 'https://api.sonqobase.com/api/v1/collections/mi_coleccion' \
-  -H 'X-API-Key: sonqo_proj_tu_clave_aqui' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "documents": [
-      {
-        "content": "Python es un lenguaje de programación",
-        "metadata": {"category": "tech"}
-      }
-    ]
-  }'</code></div>
+            <h3>2. Inserta Documentos (SDK)</h3>
+            <div class="code-block">
+                <pre><code>import { SonqoClient } from 'sonqobase';
 
-            <h3>3. Consulta con IA (RAG)</h3>
-            <div class="code-block"><code>curl -X POST 'https://api.sonqobase.com/api/v1/collections/mi_coleccion/query' \
-  -H 'X-API-Key: sonqo_proj_tu_clave_aqui' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "query": "¿Qué es Python?",
-    "top_k": 5
-  }'</code></div>
+const client = new SonqoClient({
+  apiKey: 'sonqo_proj_tu_clave_aqui'
+});
+
+// Sube un PDF
+await client.uploadPdf('mi-coleccion', fileInput.files[0]);</code></pre>
+            </div>
+
+            <h3>3. Consulta con IA (SDK)</h3>
+            <div class="code-block">
+                <pre><code>const response = await client.query({
+  collection: 'mi-coleccion',
+  query: '¿Qué dice sobre el presupuesto?',
+  topK: 3
+});
+
+console.log(response.answer);</code></pre>
+            </div>
         </div>
 
         <!-- Authentication -->

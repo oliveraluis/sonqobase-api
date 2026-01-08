@@ -203,3 +203,30 @@ class JobRepository:
         )
         
         return jobs
+    
+    def find_by_filter(
+        self,
+        filter_query: Dict[str, Any],
+        limit: int = 50,
+        sort: Optional[List[tuple]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Buscar jobs con filtro personalizado.
+        
+        Args:
+            filter_query: Filtro MongoDB (ej: {"project_id": "proj_123", "status": "completed"})
+            limit: Número máximo de jobs
+            sort: Lista de tuplas para ordenamiento (ej: [("created_at", -1)])
+        
+        Returns:
+            Lista de jobs que coinciden con el filtro
+        """
+        cursor = self.collection.find(filter_query, {"_id": 0})
+        
+        if sort:
+            cursor = cursor.sort(sort)
+        
+        jobs = list(cursor.limit(limit))
+        
+        logger.info(f"Found {len(jobs)} jobs matching filter")
+        return jobs

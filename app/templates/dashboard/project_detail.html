@@ -616,6 +616,8 @@
             <nav class="sidebar-nav">
                 <a href="/dashboard">📊 Resumen</a>
                 <a href="/dashboard/projects" class="active">🗂️ Proyectos</a>
+                <a href="/dashboard/projects/{{ project_id }}/playground" style="color: #60a5fa; font-weight: 700;">🧪
+                    Playground</a>
                 <a href="/dashboard/settings">⚙️ Configuración</a>
             </nav>
 
@@ -671,61 +673,24 @@
                 </div>
             </div>
 
-            <!-- RAG Query Section -->
-            <div class="section">
-                <h2 class="section-title">🤖 Consulta RAG (Inteligencia Artificial)</h2>
-                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
-                    Haz preguntas sobre tus documentos y obtén respuestas generadas por IA.
-                    Solo disponible para colecciones con embeddings (terminan en <code>_vectors</code>).
-                </p>
-
-                <!-- Collection Selector -->
-                <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                    <label class="form-label" for="rag-collection">Selecciona una colección RAG</label>
-                    <select id="rag-collection" class="form-select" disabled>
-                        <option value="">Cargando colecciones...</option>
-                    </select>
-                    <div class="form-hint">Solo se muestran colecciones con vectores de embeddings</div>
-                </div>
-
-                <!-- Query Input -->
-                <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                    <label class="form-label" for="rag-query">Tu pregunta</label>
-                    <textarea id="rag-query" class="form-textarea"
-                        placeholder="ej: ¿Cuáles son los principales candidatos presidenciales?" rows="3"
-                        disabled></textarea>
-                    <div class="form-hint">La IA buscará en tus documentos para responder</div>
-                </div>
-
-                <!-- Submit Button -->
-                <button id="rag-submit-btn" class="btn btn-primary" onclick="submitRagQuery()" disabled
-                    style="width: 100%; margin-bottom: var(--spacing-md);">
-                    🚀 Consultar IA
-                </button>
-
-                <!-- Loading State -->
-                <div id="rag-loading" class="rag-loading" style="display: none;">
-                    <div class="loading-spinner"></div>
-                    <div class="loading-text">
-                        <div class="loading-title">Procesando tu consulta...</div>
-                        <div class="loading-steps" id="loading-steps">
-                            <div class="loading-step active">🔍 Analizando tu pregunta</div>
-                            <div class="loading-step">📚 Buscando en tus documentos</div>
-                            <div class="loading-step">🤖 Generando respuesta con IA</div>
-                        </div>
-                        <div class="loading-hint">Esto puede tomar 10-15 segundos</div>
-                    </div>
-                </div>
-
-                <!-- Response Container -->
-                <div id="rag-response" class="rag-response" style="display: none;">
-                    <div class="response-header">
-                        <h3>💡 Respuesta</h3>
-                        <button class="btn-clear" onclick="clearRagResponse()">✕ Limpiar</button>
-                    </div>
-                    <div class="response-content" id="response-content"></div>
-                    <div class="response-sources" id="response-sources-container">
-                        <!-- Sources will be loaded here by JavaScript -->
+            <!-- Playground CTA Section -->
+            <div class="section"
+                style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1)); border: 2px solid var(--accent-primary);">
+                <div style="text-align: center; padding: var(--spacing-lg);">
+                    <div style="font-size: 4rem; margin-bottom: var(--spacing-md);">🧪</div>
+                    <h2 class="section-title" style="font-size: 2rem; margin-bottom: var(--spacing-sm);">Prueba el RAG
+                        Laboratory</h2>
+                    <p
+                        style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: var(--spacing-lg); max-width: 600px; margin-left: auto; margin-right: auto;">
+                        Sube PDFs, haz preguntas a tus documentos y obtén respuestas generadas por IA en tiempo real.
+                        Todo en un solo lugar.
+                    </p>
+                    <a href="/dashboard/projects/{{ project_id }}/playground" class="btn btn-primary"
+                        style="display: inline-block; padding: 1rem 2rem; font-size: 1.1rem; text-decoration: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                        🚀 Ir al Playground
+                    </a>
+                    <div style="margin-top: var(--spacing-md); font-size: 0.85rem; color: var(--text-secondary);">
+                        ✨ Interfaz interactiva • 📄 Upload de PDFs • 🤖 Consultas RAG • 📊 Fuentes visualizadas
                     </div>
                 </div>
             </div>

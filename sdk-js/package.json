@@ -1,0 +1,31 @@
+{
+    "name": "sonqobase",
+    "version": "0.1.0",
+    "description": "Official JavaScript/TypeScript SDK for SonqoBase API (Ephemeral Vector DB as a Service)",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "lint": "tsc",
+        "prepublishOnly": "npm run build"
+    },
+    "keywords": [
+        "rag",
+        "vector-db",
+        "ai",
+        "llm",
+        "embedding",
+        "sdk"
+    ],
+    "author": "SonqoBase Team",
+    "license": "MIT",
+    "devDependencies": {
+        "tsup": "^8.0.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {}
+}

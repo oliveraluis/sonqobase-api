@@ -47,9 +47,33 @@ SonqoBase es una API REST moderna construida con FastAPI que proporciona bases d
 - **Storage**: GridFS - Almacenamiento de archivos grandes
 - **Python**: 3.11+
 
+## 📦 JavaScript/React SDK
+
+Integra SonqoBase en tu frontend en segundos con nuestro SDK oficial.
+
+```bash
+npm install sonqobase
+```
+
+```javascript
+import { SonqoClient } from 'sonqobase';
+
+const client = new SonqoClient({
+  apiKey: 'sonqo_proj_...'
+});
+
+// Chatear con tus documentos
+const response = await client.query({
+  collection: 'mis_contratos',
+  query: '¿Cuáles son las cláusulas de rescisión?'
+});
+
+console.log(response.answer);
+```
+
 ---
 
-## 📦 Instalación
+## 💻 Instalación (Backend)
 
 ### Requisitos Previos
 - Python 3.11 o superior
