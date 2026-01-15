@@ -1,7 +1,132 @@
 {
-  "high_priority": [],
-  "medium_priority": [],
-  "low_priority": [],
-  "tech_debt": [],
-  "last_updated": "2026-01-15T09:30:00Z"
+  "high_priority": [
+    {
+      "id": "PROD-001",
+      "title": "Implementar monitoring de costos (Gemini, MongoDB, Render)",
+      "impact": 9,
+      "effort": 4,
+      "priority": 2.25,
+      "status": "in_progress",
+      "assigned_to": "cto-agent",
+      "created_at": "2026-01-15",
+      "labels": [
+        "infrastructure",
+        "monitoring"
+      ],
+      "description": "Trackear uso de Gemini tokens, MongoDB storage, y Render bandwidth para evitar sorpresas de costos"
+    },
+    {
+      "id": "PROD-002",
+      "title": "Optimizar uso de Gemini tokens (ejecutar /audit-rag)",
+      "impact": 8,
+      "effort": 3,
+      "priority": 2.67,
+      "status": "todo",
+      "assigned_to": "rag-optimizer-agent",
+      "created_at": "2026-01-15",
+      "labels": [
+        "performance",
+        "cost-optimization"
+      ],
+      "description": "Reducir tokens en 30% mediante optimización de chunk size, overlap, y prompts"
+    },
+    {
+      "id": "PROD-004",
+      "title": "Definir pricing final con CEO Agent",
+      "impact": 10,
+      "effort": 3,
+      "priority": 3.33,
+      "status": "todo",
+      "assigned_to": "ceo-agent",
+      "created_at": "2026-01-15",
+      "labels": [
+        "business",
+        "monetization"
+      ],
+      "description": "Validar tiers (Free/Pro/Enterprise) basado en costos reales y competencia"
+    }
+  ],
+  "medium_priority": [
+    {
+      "id": "PROD-005",
+      "title": "Setup error monitoring (Sentry)",
+      "impact": 7,
+      "effort": 3,
+      "priority": 2.33,
+      "status": "todo",
+      "assigned_to": "cto-agent",
+      "labels": [
+        "monitoring",
+        "reliability"
+      ]
+    },
+    {
+      "id": "PROD-006",
+      "title": "Crear Quick Start Guide (<5 min)",
+      "impact": 8,
+      "effort": 4,
+      "priority": 2.0,
+      "status": "todo",
+      "assigned_to": "cmo-agent",
+      "labels": [
+        "documentation",
+        "onboarding"
+      ]
+    },
+    {
+      "id": "PROD-007",
+      "title": "Integrar Stripe para pagos",
+      "impact": 9,
+      "effort": 6,
+      "priority": 1.5,
+      "status": "todo",
+      "assigned_to": "cto-agent",
+      "labels": [
+        "monetization",
+        "integration"
+      ]
+    }
+  ],
+  "low_priority": [
+    {
+      "id": "PROD-008",
+      "title": "Crear video tutorial de onboarding",
+      "impact": 6,
+      "effort": 5,
+      "priority": 1.2,
+      "status": "todo",
+      "assigned_to": "cmo-agent",
+      "labels": [
+        "marketing",
+        "content"
+      ]
+    }
+  ],
+  "tech_debt": [
+    {
+      "id": "DEBT-001",
+      "title": "Refactor vector_storage.py (circular imports)",
+      "impact": 5,
+      "effort": 6,
+      "priority": 0.83,
+      "status": "todo",
+      "labels": [
+        "refactoring",
+        "code-quality"
+      ]
+    },
+    {
+      "id": "DEBT-002",
+      "title": "Agregar type hints faltantes (30% del código)",
+      "impact": 4,
+      "effort": 8,
+      "priority": 0.5,
+      "status": "todo",
+      "labels": [
+        "code-quality",
+        "maintenance"
+      ]
+    }
+  ],
+  "last_updated": "2026-01-15T09:50:00Z"
 }
