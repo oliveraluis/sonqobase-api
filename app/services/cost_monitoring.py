@@ -4,28 +4,25 @@ Cost monitoring service for tracking API usage and costs.
 This service tracks Gemini API usage, MongoDB storage, and provides
 budget alerts to prevent cost surprises.
 """
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from datetime import datetime, timedelta
-from pymongo import ASCENDING, DESCENDING
-from pymongo.database import Database
 
-from app.infra.mongo_client import get_mongo_client
+from app.infra.cost_metrics_repository import CostMetricsRepository
 
 
 class CostMonitoringService:
     """Tracks costs and usage metrics using MongoDB."""
     
-    def __init__(self):
-        self.db: Database = get_mongo_client()
-        self.metrics_collection = self.db.cost_metrics
+    def __init__(self, repository: CostMetricsRepository = None):
+        self.repository = repository or CostMetricsRepository()
     
-    async def log_gemini_usage(
+    def log_gemini_usage(
         self,
         user_id: str,
         project_id: str,
         input_tokens: int,
         output_tokens: int,
-        model: str = "gemini-1.5-flash"
+        model: str = "gemini-2.5-flash"
     ) -> None:
         """
         Log Gemini API usage for cost tracking.
@@ -35,7 +32,7 @@ class CostMonitoringService:
             project_id: Project identifier
             input_tokens: Number of input tokens
             output_tokens: Number of output tokens
-            model: Model used (default: gemini-1.5-flash)
+            model: Model used (default: gemini-2.5-flash)
         """
         # Pricing as of 2026-01-15
         PRICING = {
@@ -49,7 +46,7 @@ class CostMonitoringService:
             }
         }
         
-        pricing = PRICING.get(model, PRICING["gemini-1.5-flash"])
+        pricing = PRICING.get(model, PRICING["gemini-2.5-flash"])
         input_cost = input_tokens * pricing["input"]
         output_cost = output_tokens * pricing["output"]
         total_cost = input_cost + output_cost
@@ -68,9 +65,9 @@ class CostMonitoringService:
             "type": "gemini_usage"
         }
         
-        await self.metrics_collection.insert_one(metric)
+        self.repository.insert_usage(metric)
     
-    async def get_daily_costs(self, days: int = 7) -> Dict[str, Any]:
+    def get_daily_costs(self, days: int = 7) -> Dict[str, Any]:
         """
         Get daily cost breakdown for the last N days.
         
@@ -81,31 +78,7 @@ class CostMonitoringService:
             Dictionary with daily costs and totals
         """
         start_date = datetime.utcnow() - timedelta(days=days)
-        
-        pipeline = [
-            {
-                "$match": {
-                    "timestamp": {"$gte": start_date},
-                    "type": "gemini_usage"
-                }
-            },
-            {
-                "$group": {
-                    "_id": {
-                        "$dateToString": {
-                            "format": "%Y-%m-%d",
-                            "date": "$timestamp"
-                        }
-                    },
-                    "total_cost": {"$sum": "$total_cost_usd"},
-                    "total_tokens": {"$sum": "$total_tokens"},
-                    "query_count": {"$sum": 1}
-                }
-            },
-            {"$sort": {"_id": 1}}
-        ]
-        
-        results = list(await self.metrics_collection.aggregate(pipeline).to_list(None))
+        results = self.repository.aggregate_daily_costs(start_date)
         
         return {
             "period_days": days,
@@ -115,7 +88,7 @@ class CostMonitoringService:
             "avg_cost_per_query": sum(r["total_cost"] for r in results) / max(sum(r["query_count"] for r in results), 1)
         }
     
-    async def get_user_costs(
+    def get_user_costs(
         self,
         user_id: str,
         days: int = 30
@@ -131,26 +104,7 @@ class CostMonitoringService:
             Dictionary with user costs
         """
         start_date = datetime.utcnow() - timedelta(days=days)
-        
-        pipeline = [
-            {
-                "$match": {
-                    "user_id": user_id,
-                    "timestamp": {"$gte": start_date},
-                    "type": "gemini_usage"
-                }
-            },
-            {
-                "$group": {
-                    "_id": None,
-                    "total_cost": {"$sum": "$total_cost_usd"},
-                    "total_tokens": {"$sum": "$total_tokens"},
-                    "query_count": {"$sum": 1}
-                }
-            }
-        ]
-        
-        result = list(await self.metrics_collection.aggregate(pipeline).to_list(1))
+        result = self.repository.aggregate_user_costs(user_id, start_date)
         
         if not result:
             return {
@@ -164,10 +118,10 @@ class CostMonitoringService:
         return {
             "user_id": user_id,
             "period_days": days,
-            **result[0]
+            **result
         }
     
-    async def check_budget_alerts(self) -> List[Dict[str, Any]]:
+    def check_budget_alerts(self) -> List[Dict[str, Any]]:
         """
         Check if any budget thresholds are exceeded.
         
@@ -177,8 +131,7 @@ class CostMonitoringService:
         alerts = []
         
         # Daily budget alert ($5/day)
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        today_cost = await self.get_daily_costs(days=1)
+        today_cost = self.get_daily_costs(days=1)
         
         if today_cost["total_cost"] > 5:
             alerts.append({
@@ -190,7 +143,7 @@ class CostMonitoringService:
             })
         
         # Monthly budget alert ($50/month)
-        monthly_cost = await self.get_daily_costs(days=30)
+        monthly_cost = self.get_daily_costs(days=30)
         
         if monthly_cost["total_cost"] > 50:
             alerts.append({
@@ -203,14 +156,14 @@ class CostMonitoringService:
         
         return alerts
     
-    async def get_storage_stats(self) -> Dict[str, Any]:
+    def get_storage_stats(self) -> Dict[str, Any]:
         """
         Get MongoDB storage statistics.
         
         Returns:
             Dictionary with storage stats
         """
-        stats = await self.db.command("dbStats")
+        stats = self.repository.get_storage_stats()
         
         # Free tier limit: 512 MB
         FREE_TIER_LIMIT_MB = 512
@@ -224,25 +177,9 @@ class CostMonitoringService:
             "storage_limit_mb": FREE_TIER_LIMIT_MB,
             "usage_percent": round(usage_percent, 2),
             "alert": usage_percent > 80,
-            "collections": {
-                name: await self.db[name].estimated_document_count()
-                for name in await self.db.list_collection_names()
-            }
+            "collections": self.repository.get_collection_counts()
         }
     
-    async def create_indexes(self) -> None:
+    def create_indexes(self) -> None:
         """Create necessary indexes for efficient queries."""
-        # Index for timestamp queries
-        await self.metrics_collection.create_index([("timestamp", DESCENDING)])
-        
-        # Index for user queries
-        await self.metrics_collection.create_index([
-            ("user_id", ASCENDING),
-            ("timestamp", DESCENDING)
-        ])
-        
-        # Index for project queries
-        await self.metrics_collection.create_index([
-            ("project_id", ASCENDING),
-            ("timestamp", DESCENDING)
-        ])
+        self.repository.create_indexes()
