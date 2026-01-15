@@ -104,6 +104,31 @@ RESPUESTA:"""
 
         answer: str = await self.llm_provider.generate(prompt)
 
+        # Track Gemini usage for cost monitoring
+        try:
+            from app.services.cost_monitoring import CostMonitoringService
+            
+            # Get usage metadata from LLM provider
+            usage = getattr(self.llm_provider, 'get_last_usage', lambda: {})()
+            
+            if usage and usage.get("total_tokens", 0) > 0:
+                cost_monitor = CostMonitoringService()
+                await cost_monitor.log_gemini_usage(
+                    user_id=project.user_id,
+                    project_id=project.id,
+                    input_tokens=usage.get("input_tokens", 0),
+                    output_tokens=usage.get("output_tokens", 0),
+                    model="gemini-2.5-flash"
+                )
+                logger.info(
+                    f"Gemini usage logged: {usage['input_tokens']} input, "
+                    f"{usage['output_tokens']} output tokens for user {project.user_id}"
+                )
+        except Exception as e:
+            # Don't fail the query if cost tracking fails
+            logger.warning(f"Failed to log Gemini usage: {e}")
+
+
         # Calculate response time
         response_time_ms = int((time.time() - start_time) * 1000)
 

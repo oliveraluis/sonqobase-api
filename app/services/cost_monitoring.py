@@ -39,9 +39,13 @@ class CostMonitoringService:
         """
         # Pricing as of 2026-01-15
         PRICING = {
-            "gemini-1.5-flash": {
+            "gemini-2.5-flash": {
                 "input": 0.075 / 1_000_000,  # $0.075 per 1M tokens
                 "output": 0.30 / 1_000_000   # $0.30 per 1M tokens
+            },
+            "gemini-embedding-001": {
+                "input": 0.00001 / 1_000,  # $0.00001 per 1k tokens (much cheaper)
+                "output": 0  # Embeddings don't have output
             }
         }
         
