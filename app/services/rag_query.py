@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 import time
+import logging
 
 from app.domain.embeddings import EmbeddingProvider
 
@@ -9,6 +10,8 @@ from app.infra.api_key_repository import ApiKeyRepository
 from app.infra.mongo_client import get_mongo_client
 from app.infra.event_bus import get_event_bus
 from app.domain.events import RagQueryExecutedEvent
+
+logger = logging.getLogger(__name__)
 
 
 class RagQueryService:
@@ -36,7 +39,7 @@ class RagQueryService:
 
         client = get_mongo_client()
         db = client[db_name]
-        vector_collection = db[f"{collection}__vectors"] # Fixed typo: should match ingest collection name
+        vector_collection = db[f"{collection}"] # Fixed typo: should match ingest collection name
 
         pipeline = [
             {
@@ -143,15 +146,52 @@ RESPUESTA:"""
             # No fallar si el audit log falla
             logger.warning(f"Failed to save query history: {e}")
         
+        
+        # Convert markdown to plain text for API consumers who don't want formatting
+        answer_plain = self._markdown_to_plain(answer)
+        
         return {
-            "answer": answer,
+            "answer": {
+                "markdown": answer,  # Formatted with markdown (for dashboard)
+                "plain": answer_plain,  # Plain text version (for API consumers)
+            },
+            "format_legend": {
+                "available_formats": ["markdown", "plain"],
+                "syntax": {
+                    "**text**": "Texto en negrita (conceptos clave)",
+                    "• item": "Lista con viñetas",
+                    "\n\n": "Separación de párrafos"
+                },
+                "usage": {
+                    "dashboard": "Use answer.markdown para formato enriquecido",
+                    "api": "Use answer.plain para integración simple"
+                }
+            },
             "sources": [
                 {
                    "text": r["text"],
                    "score": r.get("score"),
-                   "document_id": r["document_id"],
+                   "document_id": r.get("document_id"),
                    "metadata": r.get("metadata", {})
                 }
                 for r in results
             ]
         }
+    
+    def _markdown_to_plain(self, markdown_text: str) -> str:
+        """
+        Convert markdown formatted text to plain text.
+        Removes markdown syntax while preserving readability.
+        """
+        import re
+        
+        # Remove bold markers
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', markdown_text)
+        
+        # Convert bullet points to simple dashes
+        text = re.sub(r'•\s*', '- ', text)
+        
+        # Keep paragraph breaks
+        text = text.strip()
+        
+        return text

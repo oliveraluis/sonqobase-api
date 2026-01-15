@@ -35,7 +35,21 @@ class CollectionSourceResponse(BaseModel):
     text: str
 
 
+class AnswerFormats(BaseModel):
+    """Answer in multiple formats"""
+    markdown: str
+    plain: str
+
+
+class FormatLegend(BaseModel):
+    """Documentation about available formats"""
+    available_formats: List[str]
+    syntax: Dict[str, str]
+    usage: Dict[str, str]
+
+
 class CollectionQueryResponse(BaseModel):
-    answer: str
+    answer: AnswerFormats
+    format_legend: FormatLegend
     sources: List[CollectionSourceResponse]
 

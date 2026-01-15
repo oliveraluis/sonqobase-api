@@ -41,11 +41,11 @@ class GenerateOTPService:
         # Get user
         user = self.user_repo.get_user_by_id(user_id)
         if not user:
-            raise ValueError(f"User not found: {user_id}")
+            raise ValueError(f"Usuario no encontrado: {user_id}")
         
         email = user.get("email")
         if not email:
-            raise ValueError(f"User {user_id} has no email")
+            raise ValueError(f"El usuario {user_id} no tiene email")
         
         # Rate Limiting: Check if there is already a valid pending OTP
         existing_otp = self.otp_repo.get_latest_otp_by_user(user_id, status="pending")
@@ -57,7 +57,7 @@ class GenerateOTPService:
             # If OTP is less than 60 seconds old, block new request
             if (now - created_at).total_seconds() < 60:
                 wait_seconds = 60 - int((now - created_at).total_seconds())
-                raise ValueError(f"Please wait {wait_seconds} seconds before requesting a new code.")
+                raise ValueError(f"Por favor espera {wait_seconds} segundos antes de solicitar un nuevo código.")
         
         # Invalidate any existing pending OTPs for this user
         # We still do this sync to ensure consistency before accepting new request
@@ -102,7 +102,7 @@ class GenerateOTPService:
         
         return {
             "success": True,
-            "message": "OTP sent to your email" if should_mail else "DEV MODE: Use code 000000",
+            "message": "Código enviado a tu email" if should_mail else "MODO DEV: Usa el código 000000",
             "email": email,
             "otp_id": otp_id,
             "expires_in": 60  # 1 minute

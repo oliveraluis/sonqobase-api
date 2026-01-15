@@ -42,7 +42,7 @@ class RagIngestService:
 
         client = get_mongo_client()
         db = client[db_name]
-        vector_collection_name = f"{collection}__vectors"
+        vector_collection_name = f"{collection}_vectors"
         vector_collection = db[vector_collection_name]
 
         doc_id = document_id or f"doc_{uuid4().hex[:8]}"
@@ -60,12 +60,12 @@ class RagIngestService:
                 "document_id": doc_id,
                 "metadata": {
                     "chunk": idx,
-                    **(metadata or {}),
+                    **meta,
                 },
                 "created_at": datetime.now(timezone.utc),
                 "expires_at": project.expires_at,
             }
-            for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings))
+            for idx, (chunk, embedding, meta) in enumerate(zip(chunks, embeddings, metadata))
         ]
         
         # Inserción masiva (mucho más eficiente)

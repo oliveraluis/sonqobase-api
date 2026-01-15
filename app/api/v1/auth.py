@@ -11,6 +11,7 @@ from app.services.refresh_token import RefreshTokenService
 from app.infra.otp_repository import OTPRepository
 from app.infra.user_repository import UserRepository
 from app.dependencies.auth import require_user_key
+from app.services.generate_otp import GenerateOTPService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -25,7 +26,6 @@ async def login(request: LoginRequest, req: Request):
     """
     Initiate login by generating and sending OTP.
     Public endpoint - does not require authentication.
-    Rate limited to 5 requests per 15 minutes per IP.
     
     Args:
         api_key: User API Key
@@ -33,21 +33,6 @@ async def login(request: LoginRequest, req: Request):
     Returns:
         Message confirming OTP was sent
     """
-    from app.services.generate_otp import GenerateOTPService
-    from slowapi import Limiter
-    from slowapi.util import get_remote_address
-    
-    # Get limiter from app state
-    limiter = req.app.state.limiter
-    
-    # Apply rate limit: 5 requests per 15 minutes
-    try:
-        limiter.limit("5/15minutes")(lambda: None)()
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="⚠️ Demasiados intentos desde esta conexión. Por favor espera 15 minutos."
-        )
     
     try:
         logger.info(f"Login attempt with API key: {request.api_key[:15]}...")
@@ -107,6 +92,7 @@ async def login(request: LoginRequest, req: Request):
         )
 
 
+
 class VerifyOTPRequest(BaseModel):
     code: str
 
@@ -122,7 +108,6 @@ async def request_otp(user: dict = Depends(require_user_key)):
     Returns:
         Message confirming OTP was sent
     """
-    from app.services.generate_otp import GenerateOTPService
     
     try:
         service = GenerateOTPService(

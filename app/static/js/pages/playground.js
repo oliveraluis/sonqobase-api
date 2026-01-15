@@ -243,23 +243,27 @@ const PlaygroundPage = {
 
             const data = await response.json();
 
-            // Display response
-            document.getElementById('response-content').innerHTML = data.answer.replace(/\n/g, '<br>');
+            // Display response with markdown formatting
+            const formattedAnswer = this.formatMarkdown(data.answer.markdown);
+            document.getElementById('response-content').innerHTML = formattedAnswer;
 
             // Display sources
             const sourcesContainer = document.getElementById('response-sources-container');
+            const sourcesList = document.getElementById('response-sources');
+            sourcesList.innerHTML = '';
+
             if (data.sources && data.sources.length > 0) {
-                sourcesContainer.innerHTML = `
-                    <div class="sources-title">📚 Fuentes utilizadas (${data.sources.length}):</div>
-                    ${data.sources.map((source, idx) => `
-                        <div class="source-item">
-                            <div class="source-text">"${source.text}"</div>
-                            <div class="source-meta">Score: ${source.score?.toFixed(4)} | ID: ${source.document_id}</div>
-                        </div>
-                    `).join('')}
-                `;
+                sourcesContainer.style.display = 'block';
+                data.sources.forEach((source, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <strong>Fuente ${index + 1}</strong> (Score: ${(source.score * 100).toFixed(1)}%)
+                        <p>${source.text}</p>
+                    `;
+                    sourcesList.appendChild(li);
+                });
             } else {
-                sourcesContainer.innerHTML = '';
+                sourcesContainer.style.display = 'none';
             }
 
             document.getElementById('rag-loading').style.display = 'none';
@@ -289,6 +293,31 @@ const PlaygroundPage = {
 
         // Store interval to clear it later if needed
         window.loadingInterval = interval;
+    },
+
+    formatMarkdown(text) {
+        /**
+         * Convert markdown to HTML with custom styling
+         * Applies green color (#00ff88) to bold text and bullet points
+         */
+        if (!text) return '';
+
+        // Convert **bold** to <strong> with green color
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #00ff88;">$1</strong>');
+
+        // Convert bullet points • to styled list items
+        text = text.replace(/^•\s+(.+)$/gm, '<div style="margin-left: 20px; margin-bottom: 8px;"><span style="color: #00ff88;">•</span> $1</div>');
+
+        // Convert double line breaks to paragraph breaks
+        text = text.replace(/\n\n/g, '</p><p style="margin: 16px 0;">');
+
+        // Convert single line breaks to <br>
+        text = text.replace(/\n/g, '<br>');
+
+        // Wrap in paragraph
+        text = `<p style="margin: 16px 0;">${text}</p>`;
+
+        return text;
     },
 
     clearRagResponse() {

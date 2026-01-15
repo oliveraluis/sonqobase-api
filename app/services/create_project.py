@@ -75,26 +75,26 @@ class CreateProjectService:
         # 1️⃣ Obtener usuario y plan
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            raise ValueError(f"User '{user_id}' not found")
+            raise ValueError(f"Usuario '{user_id}' no encontrado")
         
         plan = self.plan_repo.get_by_name(user.plan_name)
         if not plan:
-            raise ValueError(f"Plan '{user.plan_name}' not found")
+            raise ValueError(f"Plan '{user.plan_name}' no encontrado")
         
         # 2️⃣ Validar que el slug sea único
         if self.repository.slug_exists(payload.slug):
             raise ValueError(
-                f"Project slug '{payload.slug}' is already taken. "
-                f"Please choose a different identifier."
+                f"El slug '{payload.slug}' ya está en uso. "
+                f"Por favor elige un identificador diferente."
             )
         
         # 3️⃣ Validar límite de proyectos
         if user.usage.projects_count >= plan.projects_limit:
             raise ValueError(
-                f"Project limit exceeded. "
-                f"Your plan allows {plan.projects_limit} projects, "
-                f"you currently have {user.usage.projects_count}. "
-                f"Upgrade your plan to create more projects."
+                f"Límite de proyectos excedido. "
+                f"Tu plan permite {plan.projects_limit} proyectos, "
+                f"actualmente tienes {user.usage.projects_count}. "
+                f"Actualiza tu plan para crear más proyectos."
             )
         
         # 3️⃣ Generar IDs y API key

@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     gemini_api_key: str = None
     encryption_key: str = None  # For encrypting API keys (Fernet key)
     
+    # Static files version for cache busting
+    static_version: str = "1.0.0"
+    
     # SMTP Configuration
     mail_host: str = "smtp.gmail.com"
     mail_port: int = 587
@@ -30,7 +33,7 @@ class Settings(BaseSettings):
     otp_length: int = 6
 
     # Environment
-    environment: str = "production"  # development, production
+    environment: str = "development"  # development | production
     mock_otp: bool = False  # If true, OTP is always 000000 and email is skipped
 
     class Config:

@@ -68,7 +68,7 @@ class VectorStorageService:
             # 3. Obtener información del proyecto (incluyendo expires_at)
             project = self.meta_db.projects.find_one({"project_id": project_id})
             if not project:
-                raise ValueError(f"Project not found: {project_id}")
+                raise ValueError(f"Proyecto no encontrado: {project_id}")
             
             # MongoDB devuelve datetimes naive, convertir a aware
             expires_at = project["expires_at"]
@@ -84,11 +84,11 @@ class VectorStorageService:
             vector_collection = ephemeral_db[vector_collection_name]
             
             # 6. Preparar documentos para inserción
-            documents = []
-            for i, (chunk, embedding, meta) in enumerate(zip(chunks, embeddings, metadata)):
-                doc = {
+            documents = [
+                {
                     "text": chunk,
                     "embedding": embedding,
+                    "document_id": job_id,
                     "metadata": {
                         **meta,
                         "source_type": "pdf",
@@ -97,12 +97,13 @@ class VectorStorageService:
                     "created_at": datetime.now(timezone.utc),
                     "expires_at": expires_at,
                 }
-                documents.append(doc)
+            for idx, (chunk, embedding, meta) in enumerate(zip(chunks, embeddings, metadata))
+            ]
             
             # Validar que hay documentos
             if not documents:
                 raise ValueError(
-                    f"No documents to insert. "
+                    f"No hay documentos para insertar. "
                     f"chunks={len(chunks)}, embeddings={len(embeddings)}, metadata={len(metadata)}"
                 )
             

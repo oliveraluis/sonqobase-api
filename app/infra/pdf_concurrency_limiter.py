@@ -89,13 +89,13 @@ class PdfConcurrencyLimiter:
         except asyncio.TimeoutError:
             current = limit  # Asumimos que está al máximo
             logger.warning(
-                f"⚠️  PDF processing limit reached: "
+                f"⚠️  Límite de procesamiento de PDF alcanzado: "
                 f"plan={normalized}, limit={limit}, job_id={job_id}"
             )
             raise ValueError(
-                f"Too many concurrent PDF uploads. "
-                f"Plan '{normalized}' allows maximum {limit} concurrent uploads. "
-                f"Please wait for current uploads to complete or upgrade your plan."
+                f"Demasiadas cargas de PDF concurrentes. "
+                f"El plan '{normalized}' permite un máximo de {limit} cargas simultáneas. "
+                f"Por favor espera a que se completen las cargas actuales o actualiza tu plan."
             )
     
     def release(self, plan_name: str, job_id: str):
