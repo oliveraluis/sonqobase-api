@@ -1,0 +1,24 @@
+# Global owners
+* @oliveraluis
+
+# RAG System
+app/services/rag_*.py @oliveraluis
+app/infra/gemini_client.py @oliveraluis
+app/listeners/vector_storage_listener.py @oliveraluis
+
+# Security & Auth
+app/api/v1/auth.py @oliveraluis
+app/dependencies/auth.py @oliveraluis
+app/infra/security.py @oliveraluis
+
+# Infrastructure
+app/infra/ @oliveraluis
+app/config.py @oliveraluis
+
+# Documentation
+*.md @oliveraluis
+docs/ @oliveraluis
+
+# Workflows & Agents
+.agent/ @oliveraluis
+.github/ @oliveraluis

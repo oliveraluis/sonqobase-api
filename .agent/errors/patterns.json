@@ -1,0 +1,23 @@
+{
+    "import_inside_function": {
+        "count": 0,
+        "last_seen": null,
+        "auto_fix": "Move import to top of file",
+        "severity": "medium",
+        "files_affected": []
+    },
+    "missing_type_hints": {
+        "count": 0,
+        "last_seen": null,
+        "auto_fix": "Add type hints based on usage",
+        "severity": "low",
+        "files_affected": []
+    },
+    "circular_imports": {
+        "count": 0,
+        "last_seen": null,
+        "auto_fix": "Refactor to remove circular dependency",
+        "severity": "high",
+        "files_affected": []
+    }
+}
