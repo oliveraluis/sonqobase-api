@@ -164,3 +164,68 @@ async def unblock_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
+
+
+# Cost Monitoring Endpoints
+@router.get("/cost-dashboard")
+async def get_cost_dashboard(
+    days: int = 7,
+    _: str = Depends(require_master_key)
+):
+    """
+    Get comprehensive cost dashboard.
+    Requires Master API Key.
+    """
+    from app.services.cost_monitoring import CostMonitoringService
+    
+    cost_monitor = CostMonitoringService()
+    
+    # Gemini costs
+    daily_costs = await cost_monitor.get_daily_costs(days=min(days, 7))
+    monthly_costs = await cost_monitor.get_daily_costs(days=30)
+    
+    # MongoDB storage
+    storage_stats = await cost_monitor.get_storage_stats()
+    
+    # Budget alerts
+    alerts = await cost_monitor.check_budget_alerts()
+    
+    return {
+        "gemini": {
+            f"last_{days}_days": daily_costs,
+            "last_30_days": monthly_costs,
+            "avg_cost_per_query": monthly_costs["avg_cost_per_query"]
+        },
+        "mongodb": storage_stats,
+        "alerts": alerts,
+        "total_monthly_estimate": monthly_costs["total_cost"]
+    }
+
+
+@router.get("/storage-stats")
+async def get_storage_stats(_: str = Depends(require_master_key)):
+    """
+    Get MongoDB storage statistics.
+    Requires Master API Key.
+    """
+    from app.services.cost_monitoring import CostMonitoringService
+    
+    cost_monitor = CostMonitoringService()
+    return await cost_monitor.get_storage_stats()
+
+
+@router.get("/user-costs/{user_id}")
+async def get_user_costs(
+    user_id: str,
+    days: int = 30,
+    _: str = Depends(require_master_key)
+):
+    """
+    Get cost breakdown for a specific user.
+    Requires Master API Key.
+    """
+    from app.services.cost_monitoring import CostMonitoringService
+    
+    cost_monitor = CostMonitoringService()
+    return await cost_monitor.get_user_costs(user_id, days)
+
