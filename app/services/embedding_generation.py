@@ -64,6 +64,31 @@ class EmbeddingGenerationService:
                 batch_embeddings = await self.embedding_provider.embed_batch(batch)
                 all_embeddings.extend(batch_embeddings)
                 
+                # Track embedding costs
+                try:
+                    from app.services.cost_monitoring import CostMonitoringService
+                    
+                    # Estimate tokens (rough: 1 token ≈ 4 chars for English, 3 for Spanish)
+                    total_chars = sum(len(text) for text in batch)
+                    estimated_tokens = total_chars // 3  # Conservative estimate
+                    
+                    # Gemini embeddings pricing: $0.00001 per 1k tokens (much cheaper than LLM)
+                    cost_monitor = CostMonitoringService()
+                    await cost_monitor.log_gemini_usage(
+                        user_id=user_id,
+                        project_id=project_id,
+                        input_tokens=estimated_tokens,
+                        output_tokens=0,  # Embeddings don't have output tokens
+                        model="gemini-embedding-001"
+                    )
+                    
+                    logger.info(
+                        f"Embedding cost logged: ~{estimated_tokens} tokens for {len(batch)} chunks"
+                    )
+                except Exception as e:
+                    # Don't fail embedding generation if cost tracking fails
+                    logger.warning(f"Failed to log embedding cost: {e}")
+                
                 # Actualizar progreso
                 progress = 60 + int((i / len(chunks)) * 30)  # 60% a 90%
                 self.job_repo.update_status(
