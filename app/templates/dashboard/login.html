@@ -215,9 +215,8 @@
 
                     otpSection.style.display = 'block';
                     apiKeyInput.disabled = true; // Lock API Key
-                    console.log('Updating button text to: Ingresar a SonqoBase');
                     loginBtn.textContent = 'Ingresar a SonqoBase';
-                    console.log('Button text after update:', loginBtn.textContent);
+                    loginBtn.dataset.originalText = 'Ingresar a SonqoBase'; // Update stored text
                     resendBtn.style.display = 'block';
                     otpInput.focus();
 
