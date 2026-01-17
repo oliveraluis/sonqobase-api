@@ -432,19 +432,56 @@
             border: 2px solid var(--border-color);
             border-radius: 8px;
             margin-bottom: var(--spacing-sm);
+            transition: all 0.3s ease;
         }
 
-        .source-text {
+        .source-item:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.1);
+        }
+
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .source-score {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent-primary);
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .source-preview,
+        .source-full {
             color: var(--text-secondary);
             font-size: 0.9rem;
             line-height: 1.6;
+            margin: 0;
         }
 
-        .source-meta {
+        .btn-expand {
             margin-top: 0.5rem;
-            font-size: 0.75rem;
-            color: var(--text-tertiary);
-            font-family: 'Monaco', monospace;
+            padding: 0.4rem 0.8rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--accent-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-expand:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--accent-primary);
         }
     </style>
 </head>

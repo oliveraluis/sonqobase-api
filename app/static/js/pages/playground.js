@@ -247,7 +247,7 @@ const PlaygroundPage = {
             const formattedAnswer = this.formatMarkdown(data.answer.markdown);
             document.getElementById('response-content').innerHTML = formattedAnswer;
 
-            // Display sources
+            // Display sources with preview and expand functionality
             const sourcesContainer = document.getElementById('response-sources-container');
             const sourcesList = document.getElementById('response-sources');
             sourcesList.innerHTML = '';
@@ -256,9 +256,32 @@ const PlaygroundPage = {
                 sourcesContainer.style.display = 'block';
                 data.sources.forEach((source, index) => {
                     const li = document.createElement('li');
+                    li.className = 'source-item';
+
+                    // Create preview (first 150 characters)
+                    const preview = source.text.length > 150
+                        ? source.text.substring(0, 150) + '...'
+                        : source.text;
+
+                    const isLong = source.text.length > 150;
+
+                    // Handle null/undefined score
+                    const scoreDisplay = source.score != null
+                        ? `${(source.score * 100).toFixed(1)}% relevancia`
+                        : 'Relevancia no disponible';
+
                     li.innerHTML = `
-                        <strong>Fuente ${index + 1}</strong> (Score: ${(source.score * 100).toFixed(1)}%)
-                        <p>${source.text}</p>
+                        <div class="source-header">
+                            <strong style="color: var(--accent-primary);">📄 Fuente ${index + 1}</strong>
+                            <span class="source-score">${scoreDisplay}</span>
+                        </div>
+                        <p class="source-preview" id="preview-${index}">${preview}</p>
+                        ${isLong ? `
+                            <p class="source-full" id="full-${index}" style="display: none;">${source.text}</p>
+                            <button class="btn-expand" onclick="PlaygroundPage.toggleSource(${index})" id="btn-${index}">
+                                Ver más ▼
+                            </button>
+                        ` : ''}
                     `;
                     sourcesList.appendChild(li);
                 });
@@ -274,6 +297,22 @@ const PlaygroundPage = {
             showAlert('Error: ' + error.message, 'error');
         } finally {
             document.getElementById('rag-submit-btn').disabled = false;
+        }
+    },
+
+    toggleSource(index) {
+        const preview = document.getElementById(`preview-${index}`);
+        const full = document.getElementById(`full-${index}`);
+        const btn = document.getElementById(`btn-${index}`);
+
+        if (full.style.display === 'none') {
+            preview.style.display = 'none';
+            full.style.display = 'block';
+            btn.textContent = 'Ver menos ▲';
+        } else {
+            preview.style.display = 'block';
+            full.style.display = 'none';
+            btn.textContent = 'Ver más ▼';
         }
     },
 
@@ -297,27 +336,64 @@ const PlaygroundPage = {
 
     formatMarkdown(text) {
         /**
-         * Convert markdown to HTML with custom styling
-         * Applies green color (#00ff88) to bold text and bullet points
+         * Convert markdown to HTML with proper formatting
+         * Handles bold text, bullet points, and paragraphs correctly
          */
         if (!text) return '';
 
-        // Convert **bold** to <strong> with green color
-        text = text.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #00ff88;">$1</strong>');
+        // Split into paragraphs first (double line breaks)
+        const paragraphs = text.split(/\n\n+/);
 
-        // Convert bullet points • to styled list items
-        text = text.replace(/^•\s+(.+)$/gm, '<div style="margin-left: 20px; margin-bottom: 8px;"><span style="color: #00ff88;">•</span> $1</div>');
+        const formattedParagraphs = paragraphs.map(para => {
+            // Check if it's a header (###, ##, #)
+            if (/^#{1,3}\s+/.test(para.trim())) {
+                const headerMatch = para.trim().match(/^(#{1,3})\s+(.+)$/);
+                if (headerMatch) {
+                    const level = headerMatch[1].length; // 1, 2, or 3
+                    const text = headerMatch[2];
+                    const fontSize = level === 1 ? '1.5rem' : level === 2 ? '1.3rem' : '1.1rem';
+                    const marginTop = level === 1 ? '20px' : '16px';
+                    return `<h${level + 2} style="color: var(--accent-primary); font-size: ${fontSize}; font-weight: 700; margin-top: ${marginTop}; margin-bottom: 12px;">${text}</h${level + 2}>`;
+                }
+            }
 
-        // Convert double line breaks to paragraph breaks
-        text = text.replace(/\n\n/g, '</p><p style="margin: 16px 0;">');
+            // Check if paragraph contains bullet points (• or *)
+            const hasBullets = para.includes('•') || /^\s*\*\s+/m.test(para);
 
-        // Convert single line breaks to <br>
-        text = text.replace(/\n/g, '<br>');
+            if (hasBullets) {
+                // Split into lines and process bullets
+                const lines = para.split('\n');
+                const bulletItems = [];
 
-        // Wrap in paragraph
-        text = `<p style="margin: 16px 0;">${text}</p>`;
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return; // Skip empty lines
 
-        return text;
+                    // Convert **bold** to styled strong tags
+                    let formatted = trimmed.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #00ff88;">$1</strong>');
+
+                    // Check if it's a bullet point (• or * at start)
+                    if (formatted.startsWith('•') || /^\*\s+/.test(formatted)) {
+                        // Remove bullet marker (• or *)
+                        formatted = formatted.replace(/^[•*]\s*/, '');
+                        bulletItems.push(`<li style="margin-bottom: 10px; padding-left: 8px;"><span style="color: #00ff88; margin-right: 8px;">•</span>${formatted}</li>`);
+                    } else {
+                        // It's a regular line within bullet context (like a title or subtitle)
+                        bulletItems.push(`<div style="margin-bottom: 8px; font-weight: 600;">${formatted}</div>`);
+                    }
+                });
+
+                return `<ul style="margin: 12px 0; padding-left: 12px; list-style: none;">${bulletItems.join('')}</ul>`;
+            } else {
+                // Regular paragraph - convert **bold**
+                let formatted = para.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #00ff88;">$1</strong>');
+                // Preserve single line breaks within paragraph
+                formatted = formatted.replace(/\n/g, '<br>');
+                return `<p style="margin: 12px 0; line-height: 1.6;">${formatted}</p>`;
+            }
+        });
+
+        return formattedParagraphs.join('');
     },
 
     clearRagResponse() {
