@@ -111,7 +111,24 @@ class PdfTextExtractionService:
                 total_pages = page_data["total_pages"]
                 text_length = len(page_data["text"])
                 
+                # En la primera página, inicializar total_pages en el resultado del job
+                # Esto es CRÍTICO para que vector_storage sepa cuántas páginas esperar
+                if page_number == 1:
+                    self.job_repo.update_status(
+                        job_id,
+                        "extracting_text",
+                        progress=10,
+                        result={
+                            "total_pages": total_pages,
+                            "pages_stored": 0,  # Inicializar contador
+                            "total_chunks_stored": 0,
+                            "total_vectors_stored": 0
+                        }
+                    )
+                    logger.info(f"📊 Job initialized with total_pages={total_pages}")
+                
                 logger.info(f"📄 Page {page_number}/{total_pages}: {text_length} chars extracted")
+
                 
                 # Publicar evento de página
                 await self.event_bus.publish(

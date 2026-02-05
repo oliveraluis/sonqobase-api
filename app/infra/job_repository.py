@@ -174,6 +174,52 @@ class JobRepository:
         new_progress = job.get('progress', 0) if job else 0
         logger.info(f"📊 Job progress: {job_id} +{delta}% → {new_progress}%")
     
+    def increment_pages_stored(
+        self,
+        job_id: str,
+        chunks_stored: int = 0,
+        vectors_stored: int = 0
+    ) -> Dict[str, int]:
+        """
+        Incrementar contador de páginas almacenadas de forma atómica.
+        
+        Args:
+            job_id: ID del job
+            chunks_stored: Chunks almacenados en esta operación
+            vectors_stored: Vectores almacenados en esta operación
+        
+        Returns:
+            Dict con pages_stored actual y total_pages
+        """
+        # Incrementar atómicamente y retornar el documento actualizado
+        result = self.collection.find_one_and_update(
+            {"job_id": job_id},
+            {
+                "$inc": {
+                    "result.pages_stored": 1,
+                    "result.total_chunks_stored": chunks_stored,
+                    "result.total_vectors_stored": vectors_stored,
+                },
+                "$set": {"updated_at": datetime.now(timezone.utc)}
+            },
+            return_document=True  # Retorna el documento DESPUÉS de la actualización
+        )
+        
+        if not result:
+            return {"pages_stored": 0, "total_pages": 0}
+        
+        job_result = result.get("result", {})
+        pages_stored = job_result.get("pages_stored", 0)
+        total_pages = job_result.get("total_pages", 0)
+        
+        logger.info(f"📊 Pages stored: {job_id} → {pages_stored}/{total_pages}")
+        
+        return {
+            "pages_stored": pages_stored,
+            "total_pages": total_pages
+        }
+
+    
     def get_user_jobs(
         self,
         user_id: str,

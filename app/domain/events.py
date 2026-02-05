@@ -86,7 +86,33 @@ class RagQueryExecutedEvent(DomainEvent):
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
+# Eventos de Texto - Pipeline Asíncrono
+@dataclass(frozen=True)
+class TextIngestStartedEvent(DomainEvent):
+    """Evento cuando inicia la ingesta de texto plano"""
+    user_id: str
+    project_id: str
+    collection: str
+    text_size_bytes: int
+    job_id: str
+    chunk_size: int = 500
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass(frozen=True)
+class TextChunkedEvent(DomainEvent):
+    """Evento cuando el texto se divide en chunks"""
+    job_id: str
+    user_id: str
+    project_id: str
+    collection: str
+    chunks: List[str]
+    chunk_metadata: List[Dict[str, Any]]
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 # Eventos de PDF - Pipeline Asíncrono
+
 @dataclass(frozen=True)
 class PdfIngestStartedEvent(DomainEvent):
     """Evento cuando inicia el procesamiento de un PDF (antes de guardar en GridFS)"""

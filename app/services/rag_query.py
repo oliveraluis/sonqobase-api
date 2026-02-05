@@ -29,6 +29,7 @@ class RagQueryService:
             collection: str,
             query: str,
             top_k: int = 5,
+            document_id: str = None,
     ) -> Dict[str, Any]:
         start_time = time.time()
         
@@ -41,17 +42,27 @@ class RagQueryService:
         db = client[db_name]
         vector_collection = db[f"{collection}"] # Fixed typo: should match ingest collection name
 
+        # Build vectorSearch stage with optional document_id filter
+        vector_search_stage = {
+            "$vectorSearch": {
+                "index": "default_vector_index",
+                "path": "embedding",
+                "queryVector": query_embedding,
+                "numCandidates": top_k * 10,
+                "limit": top_k,
+                "exact": False,
+            }
+        }
+        
+        # Add document_id filter if provided
+        if document_id:
+            vector_search_stage["$vectorSearch"]["filter"] = {
+                "document_id": document_id
+            }
+            logger.info(f"RAG query filtering by document_id: {document_id}")
+        
         pipeline = [
-            {
-                "$vectorSearch": {
-                    "index": "default_vector_index",
-                    "path": "embedding",
-                    "queryVector": query_embedding,
-                    "numCandidates": top_k * 10,
-                    "limit": top_k,
-                    "exact": False,
-                }
-            },
+            vector_search_stage,
             {
                 "$project": {
                     "_id": 0,

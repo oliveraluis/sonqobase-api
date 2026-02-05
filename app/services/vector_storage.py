@@ -83,12 +83,16 @@ class VectorStorageService:
             vector_collection_name = f"{collection}_vectors"
             vector_collection = ephemeral_db[vector_collection_name]
             
-            # 6. Preparar documentos para inserción
+            # 6. Obtener document_id del metadata del job (proporcionado por el usuario)
+            job_metadata = job.get('metadata', {})
+            document_id = job_metadata.get('document_id') or job_id  # Fallback a job_id si no existe
+            
+            # 7. Preparar documentos para inserción
             documents = [
                 {
                     "text": chunk,
                     "embedding": embedding,
-                    "document_id": job_id,
+                    "document_id": document_id,  # Usar document_id del usuario
                     "metadata": {
                         **meta,
                         "source_type": "pdf",
@@ -127,40 +131,57 @@ class VectorStorageService:
             # 9. Crear índice vectorial si no existe (para MongoDB Atlas Vector Search)
             ensure_vector_index(ephemeral_db, vector_collection_name, num_dimensions=768)
             
-            # 10. Actualizar job como completado
-            self.job_repo.update_status(
+            # 10. Incrementar contador de páginas almacenadas (atómico)
+            page_info = self.job_repo.increment_pages_stored(
                 job_id,
-                "completed",
-                progress=100,
-                result={
-                    "pages_processed": metadata[0].get('pdf_pages', 0) if metadata else 0,
-                    "chunks_created": len(chunks),
-                    "embeddings_generated": len(embeddings),
-                    "vectors_stored": inserted_count
-                }
+                chunks_stored=len(chunks),
+                vectors_stored=inserted_count
             )
             
-            # 11. Publicar evento de ingesta completada
-            # Calcular tiempo total desde creación del job
-            job_created_at = job['created_at']
+            pages_stored = page_info.get("pages_stored", 0)
+            total_pages = page_info.get("total_pages", 0)
             
-            # Asegurar que job_created_at tenga timezone
-            if job_created_at.tzinfo is None:
-                job_created_at = job_created_at.replace(tzinfo=timezone.utc)
+            logger.info(f"📊 Batch stored: job_id={job_id}, pages={pages_stored}/{total_pages}")
             
-            processing_time_ms = int((datetime.now(timezone.utc) - job_created_at).total_seconds() * 1000)
-            
-            await self.event_bus.publish(PdfIngestCompletedEvent(
-                user_id=user_id,
-                project_id=project_id,
-                collection=collection,
-                job_id=job_id,
-                pages_processed=metadata[0].get('pdf_pages', 0) if metadata else 0,
-                chunks_created=len(chunks),
-                processing_time_ms=processing_time_ms,
-            ))
-            
-            logger.info(f"🎉 PDF ingest completed: job_id={job_id}, time={processing_time_ms}ms")
+            # 11. Solo marcar como completado si TODAS las páginas están almacenadas
+            if total_pages > 0 and pages_stored >= total_pages:
+                # Esta es la última página - marcar como completado
+                self.job_repo.update_status(
+                    job_id,
+                    "completed",
+                    progress=100,
+                    result={
+                        "pages_processed": total_pages,
+                        "chunks_created": page_info.get("total_chunks_stored", len(chunks)),
+                        "embeddings_generated": page_info.get("total_vectors_stored", inserted_count),
+                        "vectors_stored": page_info.get("total_vectors_stored", inserted_count)
+                    }
+                )
+                
+                # 12. Publicar evento de ingesta completada
+                # Calcular tiempo total desde creación del job
+                job_created_at = job['created_at']
+                
+                # Asegurar que job_created_at tenga timezone
+                if job_created_at.tzinfo is None:
+                    job_created_at = job_created_at.replace(tzinfo=timezone.utc)
+                
+                processing_time_ms = int((datetime.now(timezone.utc) - job_created_at).total_seconds() * 1000)
+                
+                await self.event_bus.publish(PdfIngestCompletedEvent(
+                    user_id=user_id,
+                    project_id=project_id,
+                    collection=collection,
+                    job_id=job_id,
+                    pages_processed=total_pages,
+                    chunks_created=page_info.get("total_chunks_stored", len(chunks)),
+                    processing_time_ms=processing_time_ms,
+                ))
+                
+                logger.info(f"🎉 PDF ingest completed: job_id={job_id}, time={processing_time_ms}ms")
+            else:
+                logger.info(f"📦 Batch stored (waiting for more pages): {pages_stored}/{total_pages}")
+
             
         except Exception as e:
             logger.error(f"❌ Vector storage failed: job_id={job_id}, error={e}", exc_info=True)
