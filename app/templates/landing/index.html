@@ -61,48 +61,56 @@
 <span class="code-keyword">import</span> requests
 
 response = requests.post(
-    <span class="code-string">"https://api.sonqobase.com/v1/collections/docs/ingest/files"</span>,
-    headers={<span class="code-string">"X-API-Key"</span>: <span class="code-string">"your_key"</span>},
-    files={<span class="code-string">"file"</span>: open(<span class="code-string">"document.pdf"</span>, <span class="code-string">"rb"</span>)},
-    data={<span class="code-string">"document_id"</span>: <span class="code-string">"my_doc_001"</span>}
+    <span class="code-string">"https://sonqobase-api.onrender.com/api/v1/collections/planes_gobierno/ingest/files"</span>,
+    headers={<span class="code-string">"X-API-Key"</span>: <span class="code-string">"sonqo_proj_tu_api_key"</span>},
+    files={<span class="code-string">"file"</span>: open(<span class="code-string">"plan_gobierno.pdf"</span>, <span class="code-string">"rb"</span>)},
+    data={
+        <span class="code-string">"document_id"</span>: <span class="code-string">"plan_lopez_2026"</span>,
+        <span class="code-string">"metadata"</span>: <span class="code-string">'{"candidato": "Rafael Lopez", "partido": "Renovacion"}'</span>,
+        <span class="code-string">"chunk_size"</span>: <span class="code-string">"500"</span>
+    }
 )
 
 <span class="code-comment"># Query with natural language</span>
 results = requests.post(
-    <span class="code-string">"https://api.sonqobase.com/v1/collections/docs/query"</span>,
-    headers={<span class="code-string">"X-API-Key"</span>: <span class="code-string">"your_key"</span>},
-    json={<span class="code-string">"query"</span>: <span class="code-string">"What is the main topic?"</span>}
+    <span class="code-string">"https://sonqobase-api.onrender.com/api/v1/collections/planes_gobierno/query"</span>,
+    headers={<span class="code-string">"X-API-Key"</span>: <span class="code-string">"sonqo_proj_tu_api_key"</span>},
+    json={<span class="code-string">"query"</span>: <span class="code-string">"¿Cuál es la propuesta de educación?"</span>}
 )</code></pre>
                         <!-- JavaScript -->
                         <pre class="code-panel" data-lang="javascript"><code><span class="code-comment">// Ingest PDF with document tracking</span>
 <span class="code-keyword">const</span> formData = <span class="code-keyword">new</span> FormData();
 formData.append(<span class="code-string">'file'</span>, pdfFile);
-formData.append(<span class="code-string">'document_id'</span>, <span class="code-string">'my_doc_001'</span>);
+formData.append(<span class="code-string">'document_id'</span>, <span class="code-string">'plan_lopez_2026'</span>);
+formData.append(<span class="code-string">'metadata'</span>, JSON.stringify({candidato: <span class="code-string">'Rafael Lopez'</span>}));
+formData.append(<span class="code-string">'chunk_size'</span>, <span class="code-string">'500'</span>);
 
-<span class="code-keyword">await</span> fetch(<span class="code-string">'https://api.sonqobase.com/v1/collections/docs/ingest/files'</span>, {
+<span class="code-keyword">await</span> fetch(<span class="code-string">'https://sonqobase-api.onrender.com/api/v1/collections/planes_gobierno/ingest/files'</span>, {
     method: <span class="code-string">'POST'</span>,
-    headers: { <span class="code-string">'X-API-Key'</span>: <span class="code-string">'your_key'</span> },
+    headers: { <span class="code-string">'X-API-Key'</span>: <span class="code-string">'sonqo_proj_tu_api_key'</span> },
     body: formData
 });
 
 <span class="code-comment">// Query with natural language</span>
-<span class="code-keyword">const</span> response = <span class="code-keyword">await</span> fetch(<span class="code-string">'https://api.sonqobase.com/v1/collections/docs/query'</span>, {
+<span class="code-keyword">const</span> response = <span class="code-keyword">await</span> fetch(<span class="code-string">'https://sonqobase-api.onrender.com/api/v1/collections/planes_gobierno/query'</span>, {
     method: <span class="code-string">'POST'</span>,
-    headers: { <span class="code-string">'X-API-Key'</span>: <span class="code-string">'your_key'</span>, <span class="code-string">'Content-Type'</span>: <span class="code-string">'application/json'</span> },
-    body: JSON.stringify({ query: <span class="code-string">'What is the main topic?'</span> })
+    headers: { <span class="code-string">'X-API-Key'</span>: <span class="code-string">'sonqo_proj_tu_api_key'</span>, <span class="code-string">'Content-Type'</span>: <span class="code-string">'application/json'</span> },
+    body: JSON.stringify({ query: <span class="code-string">'¿Cuál es la propuesta de educación?'</span> })
 });</code></pre>
                         <!-- cURL -->
                         <pre class="code-panel" data-lang="curl"><code><span class="code-comment"># Ingest PDF with document tracking</span>
-curl -X POST <span class="code-string">'https://api.sonqobase.com/v1/collections/docs/ingest/files'</span> \
-  -H <span class="code-string">'X-API-Key: your_key'</span> \
-  -F <span class="code-string">'file=@document.pdf'</span> \
-  -F <span class="code-string">'document_id=my_doc_001'</span>
+curl -X POST <span class="code-string">'https://sonqobase-api.onrender.com/api/v1/collections/planes_gobierno/ingest/files'</span> \
+  -H <span class="code-string">'X-API-Key: sonqo_proj_tu_api_key'</span> \
+  -F <span class="code-string">'file=@plan_gobierno.pdf'</span> \
+  -F <span class="code-string">'document_id=plan_lopez_2026'</span> \
+  -F <span class="code-string">'metadata={"candidato":"Rafael Lopez","partido":"Renovacion"}'</span> \
+  -F <span class="code-string">'chunk_size=500'</span>
 
 <span class="code-comment"># Query with natural language</span>
-curl -X POST <span class="code-string">'https://api.sonqobase.com/v1/collections/docs/query'</span> \
-  -H <span class="code-string">'X-API-Key: your_key'</span> \
+curl -X POST <span class="code-string">'https://sonqobase-api.onrender.com/api/v1/collections/planes_gobierno/query'</span> \
+  -H <span class="code-string">'X-API-Key: sonqo_proj_tu_api_key'</span> \
   -H <span class="code-string">'Content-Type: application/json'</span> \
-  -d <span class="code-string">'{"query": "What is the main topic?"}'</span></code></pre>
+  -d <span class="code-string">'{"query": "¿Cuál es la propuesta de educación?"}'</span></code></pre>
                     </div>
                 </div>
             </div>

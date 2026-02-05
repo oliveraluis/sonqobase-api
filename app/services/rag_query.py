@@ -76,8 +76,24 @@ class RagQueryService:
         results = list(vector_collection.aggregate(pipeline))
 
         if not results:
+            no_results_msg = "No se encontró información relevante en los documentos."
             return {
-                "answer": "No relevant information found.",
+                "answer": {
+                    "markdown": no_results_msg,
+                    "plain": no_results_msg,
+                },
+                "format_legend": {
+                    "available_formats": ["markdown", "plain"],
+                    "syntax": {
+                        "**text**": "Texto en negrita (conceptos clave)",
+                        "• item": "Lista con viñetas",
+                        "\n\n": "Separación de párrafos"
+                    },
+                    "usage": {
+                        "dashboard": "Use answer.markdown para formato enriquecido",
+                        "api": "Use answer.plain para integración simple"
+                    }
+                },
                 "sources": [],
             }
 
