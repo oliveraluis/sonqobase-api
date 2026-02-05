@@ -50,13 +50,21 @@
                     <a href="/docs" class="btn-secondary">View Documentation →</a>
                 </div>
                 <div class="hero-code">
-                    <pre><code><span class="code-comment"># Ingest PDF and get vectors in seconds</span>
+                    <div class="code-tabs">
+                        <button class="code-tab active" data-lang="python">🐍 Python</button>
+                        <button class="code-tab" data-lang="javascript">⚡ JavaScript</button>
+                        <button class="code-tab" data-lang="curl">💻 cURL</button>
+                    </div>
+                    <div class="code-panels">
+                        <!-- Python -->
+                        <pre class="code-panel active" data-lang="python"><code><span class="code-comment"># Ingest PDF with document tracking</span>
 <span class="code-keyword">import</span> requests
 
 response = requests.post(
-    <span class="code-string">"https://api.sonqobase.com/v1/collections/docs/ingest"</span>,
+    <span class="code-string">"https://api.sonqobase.com/v1/collections/docs/ingest/files"</span>,
     headers={<span class="code-string">"X-API-Key"</span>: <span class="code-string">"your_key"</span>},
-    files={<span class="code-string">"file"</span>: open(<span class="code-string">"document.pdf"</span>, <span class="code-string">"rb"</span>)}
+    files={<span class="code-string">"file"</span>: open(<span class="code-string">"document.pdf"</span>, <span class="code-string">"rb"</span>)},
+    data={<span class="code-string">"document_id"</span>: <span class="code-string">"my_doc_001"</span>}
 )
 
 <span class="code-comment"># Query with natural language</span>
@@ -65,6 +73,37 @@ results = requests.post(
     headers={<span class="code-string">"X-API-Key"</span>: <span class="code-string">"your_key"</span>},
     json={<span class="code-string">"query"</span>: <span class="code-string">"What is the main topic?"</span>}
 )</code></pre>
+                        <!-- JavaScript -->
+                        <pre class="code-panel" data-lang="javascript"><code><span class="code-comment">// Ingest PDF with document tracking</span>
+<span class="code-keyword">const</span> formData = <span class="code-keyword">new</span> FormData();
+formData.append(<span class="code-string">'file'</span>, pdfFile);
+formData.append(<span class="code-string">'document_id'</span>, <span class="code-string">'my_doc_001'</span>);
+
+<span class="code-keyword">await</span> fetch(<span class="code-string">'https://api.sonqobase.com/v1/collections/docs/ingest/files'</span>, {
+    method: <span class="code-string">'POST'</span>,
+    headers: { <span class="code-string">'X-API-Key'</span>: <span class="code-string">'your_key'</span> },
+    body: formData
+});
+
+<span class="code-comment">// Query with natural language</span>
+<span class="code-keyword">const</span> response = <span class="code-keyword">await</span> fetch(<span class="code-string">'https://api.sonqobase.com/v1/collections/docs/query'</span>, {
+    method: <span class="code-string">'POST'</span>,
+    headers: { <span class="code-string">'X-API-Key'</span>: <span class="code-string">'your_key'</span>, <span class="code-string">'Content-Type'</span>: <span class="code-string">'application/json'</span> },
+    body: JSON.stringify({ query: <span class="code-string">'What is the main topic?'</span> })
+});</code></pre>
+                        <!-- cURL -->
+                        <pre class="code-panel" data-lang="curl"><code><span class="code-comment"># Ingest PDF with document tracking</span>
+curl -X POST <span class="code-string">'https://api.sonqobase.com/v1/collections/docs/ingest/files'</span> \
+  -H <span class="code-string">'X-API-Key: your_key'</span> \
+  -F <span class="code-string">'file=@document.pdf'</span> \
+  -F <span class="code-string">'document_id=my_doc_001'</span>
+
+<span class="code-comment"># Query with natural language</span>
+curl -X POST <span class="code-string">'https://api.sonqobase.com/v1/collections/docs/query'</span> \
+  -H <span class="code-string">'X-API-Key: your_key'</span> \
+  -H <span class="code-string">'Content-Type: application/json'</span> \
+  -d <span class="code-string">'{"query": "What is the main topic?"}'</span></code></pre>
+                    </div>
                 </div>
             </div>
         </div>
