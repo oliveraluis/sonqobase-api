@@ -226,3 +226,27 @@ function updatePricingCards(plans) {
 
 // Cargar pricing al cargar la página
 document.addEventListener('DOMContentLoaded', loadPricing);
+
+// ============================================
+// CODE LANGUAGE TABS
+// ============================================
+
+document.querySelectorAll('.code-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const lang = tab.getAttribute('data-lang');
+        const container = tab.closest('.hero-code');
+
+        // Update active tab
+        container.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update active panel
+        container.querySelectorAll('.code-panel').forEach(panel => {
+            if (panel.getAttribute('data-lang') === lang) {
+                panel.classList.add('active');
+            } else {
+                panel.classList.remove('active');
+            }
+        });
+    });
+});

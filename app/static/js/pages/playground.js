@@ -121,6 +121,18 @@ const PlaygroundPage = {
         const formData = new FormData();
         formData.append('file', this.selectedFile);
 
+        // Add optional document_id
+        const documentId = document.getElementById('upload-document-id').value.trim();
+        if (documentId) {
+            formData.append('document_id', documentId);
+        }
+
+        // Add optional metadata from key-value fields
+        const metadataStr = this.collectMetadata();
+        if (metadataStr) {
+            formData.append('metadata', metadataStr);
+        }
+
         try {
             const response = await fetch(`/api/v1/collections/${collection}/ingest/files`, {
                 method: 'POST',
@@ -224,16 +236,24 @@ const PlaygroundPage = {
         this.animateLoadingSteps();
 
         try {
+            // Build request body with optional document_id filter
+            const requestBody = {
+                query: query,
+                top_k: 5
+            };
+
+            const documentId = document.getElementById('rag-document-id').value.trim();
+            if (documentId) {
+                requestBody.document_id = documentId;
+            }
+
             const response = await fetch(`/api/v1/collections/${collection}/query`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-API-Key': this.apiKey
                 },
-                body: JSON.stringify({
-                    query: query,
-                    top_k: 5
-                })
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
@@ -402,6 +422,46 @@ const PlaygroundPage = {
         if (window.loadingInterval) {
             clearInterval(window.loadingInterval);
         }
+    },
+
+    // Metadata dynamic fields management
+    addMetadataRow() {
+        const container = document.getElementById('metadata-fields');
+        const row = document.createElement('div');
+        row.className = 'metadata-row';
+        row.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
+        row.innerHTML = `
+            <input type="text" class="form-input metadata-key" placeholder="Clave (ej: autor)" style="flex: 1;">
+            <input type="text" class="form-input metadata-value" placeholder="Valor (ej: Juan Pérez)" style="flex: 1;">
+            <button type="button" class="btn-remove-metadata" onclick="PlaygroundPage.removeMetadataRow(this)" 
+                style="background: transparent; border: 2px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; padding: 0.5rem 0.75rem; cursor: pointer;">✕</button>
+        `;
+        container.appendChild(row);
+    },
+
+    removeMetadataRow(button) {
+        const rows = document.querySelectorAll('.metadata-row');
+        if (rows.length > 1) {
+            button.closest('.metadata-row').remove();
+        } else {
+            // Clear values instead of removing last row
+            const row = button.closest('.metadata-row');
+            row.querySelector('.metadata-key').value = '';
+            row.querySelector('.metadata-value').value = '';
+        }
+    },
+
+    collectMetadata() {
+        const metadata = {};
+        const rows = document.querySelectorAll('.metadata-row');
+        rows.forEach(row => {
+            const key = row.querySelector('.metadata-key').value.trim();
+            const value = row.querySelector('.metadata-value').value.trim();
+            if (key && value) {
+                metadata[key] = value;
+            }
+        });
+        return Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : null;
     }
 };
 
