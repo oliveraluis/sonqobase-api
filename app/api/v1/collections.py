@@ -167,36 +167,90 @@ def get_rag_query_service() -> RagQueryService:
         llm_provider=GeminiLLMProvider(settings.gemini_api_key),
     )
 
-@router.post("/{collection}/ingest")
+@router.post(
+    "/{collection}/ingest",
+    status_code=status.HTTP_202_ACCEPTED  # Changed from 201 to 202 (Accepted)
+)
 async def collection_ingest(
     collection: str,
     payload: CollectionQueryRequest,
-    project: Project = Depends(get_project_context),
-    service: RagIngestService = Depends(get_rag_ingest_service),
+    request: Request,
 ):
-    logger.info(f"RAG ingest requested for collection '{collection}'")
-    logger.debug(f"Payload: {payload.model_dump_json()}")
-
-    try:
-        result = await service.execute(
-            project=project,
-            collection=collection,
-            text=payload.text,
-            chunk_size=payload.chunk_size,
-            document_id=getattr(payload, "document_id", None),
-            metadata=getattr(payload, "metadata", None)
+    """
+    Ingesta de texto plano (asíncrono con jobs).
+    
+    BREAKING CHANGE: Este endpoint ahora retorna job_id en lugar de resultado inmediato.
+    Los clientes deben hacer polling del job para obtener el resultado.
+    
+    Parámetros:
+    - text: Texto a ingestar
+    - chunk_size: Tamaño de chunks (default: 500)
+    
+    Retorna:
+    - job_id: ID del trabajo para hacer polling
+    - status: Estado inicial ("processing")
+    - check_status_url: URL para consultar estado del job
+    """
+    logger.info(f"📝 Text ingest requested for collection '{collection}'")
+    
+    # Obtener project context
+    project = await get_project_context(request)
+    project_id = project.id
+    user_id = project.user_id
+    
+    # Obtener usuario y plan
+    user_repo = UserRepository()
+    user = user_repo.get_by_id(user_id)
+    
+    plan_repo = PlanRepository()
+    plan = plan_repo.get_by_name(user.plan_name)
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Plan configuration not found"
         )
-        logger.info(f"RAG ingest completed: {result['chunks_inserted']} chunks inserted.")
-        return result
-    except ValueError:
-        logger.warning("Invalid API Key")
-        raise HTTPException(status_code=401, detail="Invalid API Key")
-    except RuntimeError:
-        logger.warning("Project expired")
-        raise HTTPException(status_code=410, detail="Project expired")
+    
+    # Usar TextIngestStrategy
+    strategy = TextIngestStrategy()
+    
+    try:
+        # Validar según límites del plan
+        await strategy.validate(user, plan, payload.text)
+        
+        # Procesar texto (retorna job_id)
+        job_id = await strategy.process(
+            user_id=user_id,
+            project_id=project_id,
+            collection=collection,
+            source=payload.text,
+            chunk_size=payload.chunk_size,
+            plan=plan,
+        )
+        
+        logger.info(f"✅ Text ingest started: job_id={job_id}")
+        
+        # Response con información para polling
+        return {
+            "job_id": job_id,
+            "status": "processing",
+            "collection": collection,
+            "message": "Text is being processed. This may take a few moments.",
+            "check_status_url": f"/api/v1/jobs/{job_id}",
+            "estimated_time_seconds": 10
+        }
+    
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception as e:
-        logger.error(f"Unexpected error during RAG ingest: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ Error in text ingest: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error during text ingestion"
+        )
+
 
 # Nuevo endpoint para ingesta de archivos (PDFs)
 @router.post(
@@ -228,11 +282,31 @@ async def ingest_files(
     # Sin embargo, el Request ya tiene state.project_id si se usó Key en middleware?
     # NO. Middleware solo verifica, no inyecta dependencia.
     
-    # Vamos a usar manualmente el dependency para resolver el proyecto
-    project = await get_project_context(request)
+    # Resolver proyecto manualmente (ya que Depends no funciona con Form/UploadFile combinado)
+    from app.infra.project_repository import ProjectRepository
+    
+    x_api_key = request.headers.get("X-API-Key")
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="X-API-Key header required")
+    
+    project_repo = ProjectRepository()
+    project = project_repo.get_by_api_key(x_api_key)
+    if not project:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+    
+    # Check expiry
+    if project.expires_at:
+        expires = project.expires_at
+        if expires.tzinfo is None:
+            from datetime import timezone
+            expires = expires.replace(tzinfo=timezone.utc)
+        from datetime import datetime, timezone
+        if expires < datetime.now(timezone.utc):
+            raise HTTPException(status_code=410, detail="Project expired")
     
     project_id = project.id
     user_id = project.user_id
+
     # user = request.state.user ?? No, get_project_context guarantees project access
     
     # Necesitamos el User entity para el rate limit. 
@@ -327,6 +401,7 @@ async def collection_query(
             collection=collection,
             query=payload.query,
             top_k=payload.top_k,
+            document_id=payload.document_id,
         )
         logger.info(f"RAG query completed, {len(result['sources'])} documents retrieved.")
         return result

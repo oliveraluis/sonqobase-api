@@ -67,7 +67,7 @@ class ListProjectJobsService:
         for job in jobs:
             jobs_list.append({
                 "job_id": job.get("job_id"),
-                "collection_name": job.get("collection_name"),
+                "collection": job.get("collection"),  # Campo correcto de la BD
                 "status": job.get("status"),
                 "created_at": job.get("created_at").isoformat() if job.get("created_at") else None,
                 "completed_at": job.get("completed_at").isoformat() if job.get("completed_at") else None,

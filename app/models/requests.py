@@ -14,6 +14,7 @@ class InsertCollectionRequest(BaseModel):
 class CollectionIngestRequest(BaseModel):
     query: str
     top_k: int = 5
+    document_id: Optional[str] = None  # Filter by specific document
 
 class CollectionQueryRequest(BaseModel):
     text: str

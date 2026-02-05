@@ -333,7 +333,7 @@
                             Identificador (Slug) *
                         </label>
                         <input type="text" id="project-slug" class="form-input"
-                            placeholder="ej: mi-aplicacion-increible" required pattern="[a-z0-9-]+" maxlength="50">
+                            placeholder="ej: mi-aplicacion-increible" required pattern="[a-z0-9\-]+" maxlength="50">
                         <div class="form-hint">Solo minúsculas, números y guiones. Se usará en las URLs de tu API.</div>
                         <div class="form-error" id="slug-error"></div>
                     </div>
@@ -395,7 +395,7 @@
             if (!slugInput.value.trim()) {
                 showError('slug-error', 'El identificador (slug) es obligatorio');
                 hasError = true;
-            } else if (!/^[a-z0-9-]+$/.test(slugInput.value)) {
+            } else if (!/^[a-z0-9\-]+$/.test(slugInput.value)) {
                 showError('slug-error', 'El slug solo puede contener minúsculas, números y guiones');
                 hasError = true;
             }
@@ -416,7 +416,18 @@
                     }),
                 });
 
+                // Check if response is ok before parsing
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Error al crear el proyecto');
+                }
+
                 const project = await response.json();
+
+                // Validate that we got a project with an ID
+                if (!project || !project.id) {
+                    throw new Error('Respuesta inválida del servidor');
+                }
 
                 showAlert('¡Proyecto creado exitosamente!', 'success');
 
@@ -428,12 +439,12 @@
             } catch (error) {
                 console.error('Error creating project:', error);
 
-                if (error.message.includes('slug already exists')) {
+                if (error.message.includes('slug already exists') || error.message.includes('ya está en uso')) {
                     showError('slug-error', 'Este identificador ya está en uso. Por favor elige otro.');
-                } else if (error.message.includes('limit')) {
+                } else if (error.message.includes('limit') || error.message.includes('límite')) {
                     showAlert('Alcanzaste el límite de proyectos. Mejora tu plan para crear más.', 'error');
                 } else {
-                    showAlert('Error al crear el proyecto. Por favor intenta de nuevo.', 'error');
+                    showAlert(error.message || 'Error al crear el proyecto. Por favor intenta de nuevo.', 'error');
                 }
 
                 submitBtn.disabled = false;
