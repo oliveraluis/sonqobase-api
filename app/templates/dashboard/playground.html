@@ -543,13 +543,41 @@
                     <div class="form-hint">Si no existe, se creará automáticamente</div>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label">ID del Documento (opcional)</label>
+                    <input type="text" id="upload-document-id" class="form-input" placeholder="ej: plan_gobierno_2026">
+                    <div class="form-hint">Identificador único para filtrar consultas. Si no lo ingresas, se generará
+                        automáticamente.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Metadata (opcional)</label>
+                    <div id="metadata-fields">
+                        <div class="metadata-row" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input type="text" class="form-input metadata-key" placeholder="Clave (ej: autor)"
+                                style="flex: 1;">
+                            <input type="text" class="form-input metadata-value" placeholder="Valor (ej: Juan Pérez)"
+                                style="flex: 1;">
+                            <button type="button" class="btn-remove-metadata"
+                                onclick="PlaygroundPage.removeMetadataRow(this)"
+                                style="background: transparent; border: 2px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; padding: 0.5rem 0.75rem; cursor: pointer;">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="PlaygroundPage.addMetadataRow()"
+                        style="background: transparent; border: 2px dashed var(--border-color); color: var(--accent-primary); border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; width: 100%; margin-top: 0.5rem; font-weight: 600;">
+                        + Agregar campo
+                    </button>
+                    <div class="form-hint">Información adicional del documento</div>
+                </div>
+
                 <div class="upload-zone" id="upload-zone">
                     <input type="file" id="file-input" accept="application/pdf" style="display: none;">
                     <div id="upload-prompt">
                         <div style="font-size: 3rem; margin-bottom: var(--spacing-sm);">📄</div>
                         <p style="font-weight: 600; margin-bottom: 0.5rem;">Arrastra un PDF aquí o haz click para
                             seleccionar</p>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Máximo 10MB</p>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Máximo <span
+                                id="pdf-max-size">10</span>MB según tu plan</p>
                     </div>
                     <div id="file-selected" style="display: none;"></div>
                 </div>
@@ -583,6 +611,14 @@
                     <textarea id="rag-query" class="form-textarea"
                         placeholder="ej: ¿Cuáles son los puntos clave del documento?" rows="3" disabled></textarea>
                     <div class="form-hint">La IA buscará en tus documentos para responder</div>
+                </div>
+
+                <!-- Document ID Filter -->
+                <div class="form-group">
+                    <label class="form-label" for="rag-document-id">Filtrar por ID de Documento (opcional)</label>
+                    <input type="text" id="rag-document-id" class="form-input" placeholder="ej: plan_gobierno_2026">
+                    <div class="form-hint">Busca solo en un documento específico. Déjalo vacío para buscar en todos.
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
@@ -634,6 +670,11 @@
             // Load user info
             document.getElementById('user-email').textContent = user.email;
             document.getElementById('user-plan').textContent = user.plan;
+
+            // Update PDF max size based on user's plan
+            if (user.pdf_max_size_mb) {
+                document.getElementById('pdf-max-size').textContent = user.pdf_max_size_mb;
+            }
 
             // Initialize playground
             await PlaygroundPage.init(projectId);
